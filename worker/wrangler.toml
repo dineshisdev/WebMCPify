@@ -1,0 +1,34 @@
+name = "webmcpify-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-09-02"
+compatibility_flags = ["nodejs_compat"]
+
+# Static assets (the built bridge). run_worker_first so the Worker owns all routing
+# and the bridge is only reachable at /s/<id>/__webmcpify/bridge.js.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+# Next.js app that serves GET /api/sites/:id/manifest. Empty string => dev-sites only.
+API_BASE = "https://webmcpify.netlify.app"
+# Where GET / redirects.
+DASHBOARD_URL = "https://webmcpify.netlify.app"
+# Optional: origin used by the built-in `demo` dev site when API_BASE is empty/unreachable.
+# DEMO_ORIGIN = "http://localhost:8080"
+# Optional: "1" lets the proxy target localhost / private-range origins (local dev ONLY).
+# ALLOW_PRIVATE_ORIGINS = "1"
+# Optional: comma-separated origins allowed through the instant proxy.
+# Empty/unset = any analyzed origin without a sign-in form. Set this to lock the
+# proxy down to your own demo sites without a code change.
+# ALLOWED_ORIGINS = "https://stride-legacy.netlify.app"
+
+# Local development: `npm run dev:local` (= wrangler dev --env dev)
+# Proxies /s/demo/ to a demo store running on http://localhost:8080 without any API.
+[env.dev]
+[env.dev.vars]
+API_BASE = "http://localhost:3000"
+DASHBOARD_URL = "http://localhost:3000"
+DEMO_ORIGIN = "http://localhost:8080"
+ALLOW_PRIVATE_ORIGINS = "1"

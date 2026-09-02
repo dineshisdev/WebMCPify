@@ -1,0 +1,17 @@
+{
+  "name": "webmcpify-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker reverse proxy that serves third-party sites same-origin with the WebMCPify bridge injected.",
+  "scripts": {
+    "dev": "wrangler dev --env dev",
+    "dev:demo": "wrangler dev --var DEMO_ORIGIN:https://webmcp-starter.netlify.app",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260902.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.128.0"
+  }
+}

@@ -1,0 +1,750 @@
+[
+  {
+    "id": "sn-001",
+    "name": "Nivo Pulse Runner",
+    "brand": "Nivo",
+    "category": "running",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 8999,
+    "rating": 4.6,
+    "reviews": 128,
+    "stock": 34,
+    "weightGrams": 245,
+    "drop": 8,
+    "upper": "Engineered mesh",
+    "sole": "Dual-density EVA",
+    "description": "A do-everything daily trainer with a springy EVA midsole and a breathable engineered-mesh upper. Built for easy miles and tempo days alike.",
+    "art": {
+      "bg": "#1c1c1e",
+      "accent": "#f2f2f0"
+    }
+  },
+  {
+    "id": "sn-002",
+    "name": "Cloudstep Aero Glide",
+    "brand": "Cloudstep",
+    "category": "running",
+    "colors": [
+      "white",
+      "blue"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 7499,
+    "rating": 4.4,
+    "reviews": 96,
+    "stock": 22,
+    "weightGrams": 232,
+    "drop": 6,
+    "upper": "Knit mesh",
+    "sole": "CloudFoam",
+    "description": "Light, soft and fast. The Aero Glide pairs a plush CloudFoam midsole with a sock-like knit upper for a smooth ride.",
+    "art": {
+      "bg": "#e8f0fb",
+      "accent": "#2f6fed"
+    }
+  },
+  {
+    "id": "sn-003",
+    "name": "Kinetik Velocity 3",
+    "brand": "Kinetik",
+    "category": "running",
+    "colors": [
+      "black",
+      "red"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 9499,
+    "rating": 4.5,
+    "reviews": 211,
+    "stock": 18,
+    "weightGrams": 238,
+    "drop": 8,
+    "upper": "Jacquard mesh",
+    "sole": "Nitro-infused foam",
+    "description": "Third-generation Velocity with a nitrogen-infused midsole that returns more energy per stride. A favourite for 10K and half-marathon racers.",
+    "art": {
+      "bg": "#161616",
+      "accent": "#e63946"
+    }
+  },
+  {
+    "id": "sn-004",
+    "name": "Nivo Tempo Elite",
+    "brand": "Nivo",
+    "category": "running",
+    "colors": [
+      "black",
+      "volt"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 14999,
+    "rating": 4.8,
+    "reviews": 342,
+    "stock": 12,
+    "weightGrams": 198,
+    "drop": 8,
+    "upper": "Ultralight ripstop",
+    "sole": "Carbon plate + PEBA foam",
+    "description": "Race-day weapon. A full-length carbon plate sandwiched in PEBA foam delivers a propulsive, aggressive toe-off.",
+    "art": {
+      "bg": "#121212",
+      "accent": "#c6ff3d"
+    }
+  },
+  {
+    "id": "sn-005",
+    "name": "Cloudstep Featherlite",
+    "brand": "Cloudstep",
+    "category": "running",
+    "colors": [
+      "grey",
+      "black"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "10",
+      "11"
+    ],
+    "price": 6999,
+    "rating": 4.3,
+    "reviews": 77,
+    "stock": 40,
+    "weightGrams": 215,
+    "drop": 5,
+    "upper": "Single-layer mesh",
+    "sole": "CloudFoam Lite",
+    "description": "Minimal weight, minimal fuss. A low-drop trainer for runners who like to feel the road.",
+    "art": {
+      "bg": "#ececea",
+      "accent": "#3a3a3a"
+    }
+  },
+  {
+    "id": "sn-006",
+    "name": "Kinetik Stride Daily",
+    "brand": "Kinetik",
+    "category": "running",
+    "colors": [
+      "black",
+      "grey"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 5999,
+    "rating": 4.3,
+    "reviews": 154,
+    "stock": 50,
+    "weightGrams": 262,
+    "drop": 10,
+    "upper": "Air mesh",
+    "sole": "Rubber-capped EVA",
+    "description": "Reliable, cushioned and priced for everyday runs. A durable outsole makes it a great commuter shoe too.",
+    "art": {
+      "bg": "#232326",
+      "accent": "#9aa0a6"
+    }
+  },
+  {
+    "id": "sn-007",
+    "name": "Trailform Roadline",
+    "brand": "Trailform",
+    "category": "running",
+    "colors": [
+      "orange",
+      "navy"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 8499,
+    "rating": 4.2,
+    "reviews": 63,
+    "stock": 0,
+    "weightGrams": 255,
+    "drop": 8,
+    "upper": "Recycled mesh",
+    "sole": "TrailGrip Road",
+    "description": "Trailform brings its rugged DNA to the road with a grippy outsole and a roomy toe box.",
+    "art": {
+      "bg": "#1d2a44",
+      "accent": "#ff7a1a"
+    }
+  },
+  {
+    "id": "sn-008",
+    "name": "Urbane Court Classic",
+    "brand": "Urbane",
+    "category": "lifestyle",
+    "colors": [
+      "white",
+      "green"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 4999,
+    "rating": 4.5,
+    "reviews": 402,
+    "stock": 80,
+    "weightGrams": 380,
+    "drop": 0,
+    "upper": "Full-grain leather",
+    "sole": "Cupsole rubber",
+    "description": "The white leather tennis shoe that goes with everything. Clean lines, green heel tab, timeless.",
+    "art": {
+      "bg": "#f4f4f1",
+      "accent": "#1f7a4d"
+    }
+  },
+  {
+    "id": "sn-009",
+    "name": "Urbane Midnight Low",
+    "brand": "Urbane",
+    "category": "lifestyle",
+    "colors": [
+      "black"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 6499,
+    "rating": 4.4,
+    "reviews": 188,
+    "stock": 27,
+    "weightGrams": 360,
+    "drop": 0,
+    "upper": "Nubuck leather",
+    "sole": "Vulcanised rubber",
+    "description": "All-black nubuck low-top with a vulcanised sole. Understated enough for the office, tough enough for the weekend.",
+    "art": {
+      "bg": "#0f0f10",
+      "accent": "#3d3d40"
+    }
+  },
+  {
+    "id": "sn-010",
+    "name": "Nivo Retro '89",
+    "brand": "Nivo",
+    "category": "lifestyle",
+    "colors": [
+      "cream",
+      "brown"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 7999,
+    "rating": 4.6,
+    "reviews": 233,
+    "stock": 15,
+    "weightGrams": 340,
+    "drop": 0,
+    "upper": "Suede and nylon",
+    "sole": "Gum rubber",
+    "description": "A faithful reissue of Nivo's 1989 trainer with suede overlays, a nylon toe and a gum sole.",
+    "art": {
+      "bg": "#f1e6d2",
+      "accent": "#7a4b2a"
+    }
+  },
+  {
+    "id": "sn-011",
+    "name": "Cloudstep Slipstream Knit",
+    "brand": "Cloudstep",
+    "category": "lifestyle",
+    "colors": [
+      "beige",
+      "sand"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 5499,
+    "rating": 4.1,
+    "reviews": 58,
+    "stock": 33,
+    "weightGrams": 260,
+    "drop": 0,
+    "upper": "Stretch knit",
+    "sole": "Moulded EVA",
+    "description": "Laceless slip-on comfort in a neutral knit. Perfect for travel days and airport dashes.",
+    "art": {
+      "bg": "#efe7da",
+      "accent": "#b89a6e"
+    }
+  },
+  {
+    "id": "sn-012",
+    "name": "Urbane Chunky Volt",
+    "brand": "Urbane",
+    "category": "lifestyle",
+    "colors": [
+      "white",
+      "black",
+      "volt"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 10999,
+    "rating": 4.3,
+    "reviews": 91,
+    "stock": 9,
+    "weightGrams": 420,
+    "drop": 0,
+    "upper": "Mesh and synthetic leather",
+    "sole": "Layered TPU",
+    "description": "A statement chunky sneaker with a stacked TPU sole and volt pops. Not for the shy.",
+    "art": {
+      "bg": "#f7f7f4",
+      "accent": "#b8f000"
+    }
+  },
+  {
+    "id": "sn-013",
+    "name": "Kinetik Street Ace",
+    "brand": "Kinetik",
+    "category": "lifestyle",
+    "colors": [
+      "red",
+      "white"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 3499,
+    "rating": 3.9,
+    "reviews": 44,
+    "stock": 60,
+    "weightGrams": 310,
+    "drop": 0,
+    "upper": "Canvas",
+    "sole": "Vulcanised rubber",
+    "description": "Classic canvas low-top at a friendly price. Break them in and they only get better.",
+    "art": {
+      "bg": "#fbe9e7",
+      "accent": "#c62828"
+    }
+  },
+  {
+    "id": "sn-014",
+    "name": "Nivo Skyline Hi",
+    "brand": "Nivo",
+    "category": "lifestyle",
+    "colors": [
+      "navy",
+      "white"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 6999,
+    "rating": 4.2,
+    "reviews": 120,
+    "stock": 24,
+    "weightGrams": 395,
+    "drop": 0,
+    "upper": "Leather and canvas",
+    "sole": "Cupsole rubber",
+    "description": "High-top silhouette with padded collar and navy leather panels. A weekend staple.",
+    "art": {
+      "bg": "#e6ebf5",
+      "accent": "#1e3a8a"
+    }
+  },
+  {
+    "id": "sn-015",
+    "name": "Kinetik Hangtime Pro",
+    "brand": "Kinetik",
+    "category": "basketball",
+    "colors": [
+      "black",
+      "gold"
+    ],
+    "sizes": [
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 12999,
+    "rating": 4.7,
+    "reviews": 275,
+    "stock": 14,
+    "weightGrams": 410,
+    "drop": 10,
+    "upper": "Woven synthetic",
+    "sole": "Herringbone rubber",
+    "description": "Court-ready with a forefoot Zoom-style unit and lockdown lacing. Gold accents for big-game energy.",
+    "art": {
+      "bg": "#141414",
+      "accent": "#d4a017"
+    }
+  },
+  {
+    "id": "sn-016",
+    "name": "Nivo Rim Rocker",
+    "brand": "Nivo",
+    "category": "basketball",
+    "colors": [
+      "white",
+      "red"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 9999,
+    "rating": 4.4,
+    "reviews": 133,
+    "stock": 21,
+    "weightGrams": 395,
+    "drop": 10,
+    "upper": "Synthetic leather",
+    "sole": "Multi-directional rubber",
+    "description": "A mid-cut with a wide base for stability on hard cuts. Outdoor-rated outsole.",
+    "art": {
+      "bg": "#f5f5f5",
+      "accent": "#d62828"
+    }
+  },
+  {
+    "id": "sn-017",
+    "name": "Urbane Baseline Mid",
+    "brand": "Urbane",
+    "category": "basketball",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "sizes": [
+      "8",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 7499,
+    "rating": 4.2,
+    "reviews": 87,
+    "stock": 30,
+    "weightGrams": 402,
+    "drop": 9,
+    "upper": "Textile and synthetic",
+    "sole": "Solid rubber",
+    "description": "A no-nonsense mid for pickup games and everyday wear. Padded ankle collar and a durable outsole.",
+    "art": {
+      "bg": "#1a1a1a",
+      "accent": "#ffffff"
+    }
+  },
+  {
+    "id": "sn-018",
+    "name": "Cloudstep Elevate",
+    "brand": "Cloudstep",
+    "category": "basketball",
+    "colors": [
+      "blue",
+      "white"
+    ],
+    "sizes": [
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 11499,
+    "rating": 4.5,
+    "reviews": 64,
+    "stock": 11,
+    "weightGrams": 388,
+    "drop": 8,
+    "upper": "Knit with TPU cage",
+    "sole": "CloudFoam Court",
+    "description": "Cloudstep cushioning tuned for the court, with a TPU cage that keeps your foot planted.",
+    "art": {
+      "bg": "#e3ecfa",
+      "accent": "#1d4ed8"
+    }
+  },
+  {
+    "id": "sn-019",
+    "name": "Kinetik Crossover Lite",
+    "brand": "Kinetik",
+    "category": "basketball",
+    "colors": [
+      "grey",
+      "orange"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 8999,
+    "rating": 4,
+    "reviews": 39,
+    "stock": 25,
+    "weightGrams": 350,
+    "drop": 8,
+    "upper": "Mesh",
+    "sole": "Herringbone rubber",
+    "description": "A lighter, lower-cut guard shoe for players who live on quick first steps.",
+    "art": {
+      "bg": "#e9e9e9",
+      "accent": "#f4711f"
+    }
+  },
+  {
+    "id": "sn-020",
+    "name": "Trailform Ridge GTX",
+    "brand": "Trailform",
+    "category": "trail",
+    "colors": [
+      "olive",
+      "black"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 13499,
+    "rating": 4.8,
+    "reviews": 198,
+    "stock": 0,
+    "weightGrams": 330,
+    "drop": 6,
+    "upper": "Waterproof membrane",
+    "sole": "TrailGrip 5 mm lugs",
+    "description": "Waterproof, breathable and sure-footed on wet rock. Our most-loved trail shoe for monsoon hikes.",
+    "art": {
+      "bg": "#2c3a2a",
+      "accent": "#a3b18a"
+    }
+  },
+  {
+    "id": "sn-021",
+    "name": "Trailform Summit Lite",
+    "brand": "Trailform",
+    "category": "trail",
+    "colors": [
+      "orange",
+      "grey"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 9499,
+    "rating": 4.6,
+    "reviews": 145,
+    "stock": 19,
+    "weightGrams": 285,
+    "drop": 6,
+    "upper": "Ripstop mesh",
+    "sole": "TrailGrip 4 mm lugs",
+    "description": "Fast and light for trail races and ridge runs. Rock plate underfoot, gaiter hooks up top.",
+    "art": {
+      "bg": "#3b3b3b",
+      "accent": "#ff8c1a"
+    }
+  },
+  {
+    "id": "sn-022",
+    "name": "Nivo Terra Grip",
+    "brand": "Nivo",
+    "category": "trail",
+    "colors": [
+      "brown",
+      "black"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 10499,
+    "rating": 4.3,
+    "reviews": 82,
+    "stock": 28,
+    "weightGrams": 310,
+    "drop": 8,
+    "upper": "Abrasion-resistant mesh",
+    "sole": "Sticky rubber lugs",
+    "description": "Nivo's grippiest outsole compound on a cushioned trail platform. Great for mixed terrain.",
+    "art": {
+      "bg": "#4a3628",
+      "accent": "#d9b48f"
+    }
+  },
+  {
+    "id": "sn-023",
+    "name": "Trailform Mudrunner",
+    "brand": "Trailform",
+    "category": "trail",
+    "colors": [
+      "navy",
+      "volt"
+    ],
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "price": 7999,
+    "rating": 4.4,
+    "reviews": 110,
+    "stock": 17,
+    "weightGrams": 300,
+    "drop": 4,
+    "upper": "Quick-dry mesh",
+    "sole": "TrailGrip 6 mm lugs",
+    "description": "Deep lugs and a drainage-friendly upper for the muddiest days. Sheds water fast.",
+    "art": {
+      "bg": "#15233d",
+      "accent": "#c6ff3d"
+    }
+  },
+  {
+    "id": "sn-024",
+    "name": "Cloudstep Pathfinder",
+    "brand": "Cloudstep",
+    "category": "trail",
+    "colors": [
+      "grey",
+      "teal"
+    ],
+    "sizes": [
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "price": 6499,
+    "rating": 4.1,
+    "reviews": 52,
+    "stock": 36,
+    "weightGrams": 295,
+    "drop": 6,
+    "upper": "Mesh with TPU overlays",
+    "sole": "CloudFoam Trail",
+    "description": "An approachable trail shoe for gravel paths and forest loops. Soft where it matters.",
+    "art": {
+      "bg": "#e2ecec",
+      "accent": "#0f766e"
+    }
+  }
+]

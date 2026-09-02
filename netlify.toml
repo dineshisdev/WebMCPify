@@ -1,0 +1,12 @@
+# Next.js dashboard. Connect GitHub → this repo (base directory = repo root).
+# Demo store is a second Netlify site from the same repo: base directory = demo-site/
+
+[build]
+  command = "npm run build:bridge && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

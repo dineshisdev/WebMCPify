@@ -1,0 +1,16 @@
+{
+  "name": "@webmcpify/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WebMCPify bridge runtime: a dependency-free IIFE that registers manifest tools with WebMCP and interprets declarative recipes against the live DOM.",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node test/run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "typescript": "^7.0.2"
+  }
+}

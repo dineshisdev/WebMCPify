@@ -1,0 +1,972 @@
+{
+  "version": 1,
+  "siteId": "demo",
+  "origin": "https://stride-legacy.netlify.app",
+  "name": "Stride Legacy Store",
+  "category": "commerce",
+  "spa": true,
+  "generatedAt": "2026-09-02T10:00:00Z",
+  "settings": {
+    "badge": true,
+    "outputBudget": 1500,
+    "confirmTimeoutMs": 60000
+  },
+  "tools": [
+    {
+      "name": "search_products",
+      "risk": "read",
+      "enabled": true,
+      "source": "manual",
+      "description": "Search the sneaker catalog by keyword (name, brand, color or category). Returns up to 12 matches with id, name, brand, price (INR) and rating. Use get_product for full details of one item.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search keywords, e.g. 'black running'"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/shop",
+          "path": "/shop",
+          "waitFor": {
+            "css": "#search"
+          }
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#search"
+          },
+          "value": "{{input.query}}"
+        },
+        {
+          "op": "press",
+          "key": "Enter",
+          "target": {
+            "css": "#search"
+          }
+        },
+        {
+          "op": "waitForDomIdle",
+          "quietMs": 300,
+          "timeoutMs": 4000
+        },
+        {
+          "op": "extractList",
+          "root": {
+            "css": "#product-grid"
+          },
+          "item": "li.product-card",
+          "limit": 12,
+          "as": "items",
+          "fields": {
+            "id": {
+              "attr": "data-product-id"
+            },
+            "name": {
+              "css": ".product-name"
+            },
+            "brand": {
+              "css": ".product-brand"
+            },
+            "price": {
+              "css": ".product-price",
+              "type": "number"
+            },
+            "rating": {
+              "css": ".product-rating",
+              "regex": "([0-9.]+)",
+              "type": "number"
+            },
+            "colors": {
+              "css": ".product-colors"
+            }
+          }
+        },
+        {
+          "op": "return",
+          "value": {
+            "query": "{{input.query}}",
+            "count": "{{vars.items.length}}",
+            "products": "{{vars.items}}"
+          },
+          "ifEmpty": {
+            "var": "items",
+            "message": "No products matched '{{input.query}}'. Try a broader keyword or use filter_products."
+          }
+        }
+      ],
+      "samples": [
+        {
+          "query": "black"
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "query": "black"
+        },
+        "sampleOutput": "{\"query\":\"black\",\"count\":11,\"products\":[{\"id\":\"sn-001\",\"name\":\"Nivo Pulse Runner\",\"brand\":\"Nivo\",\"price\":8999,\"rating\":4.6,\"colors\":\"black, white\"},{\"id\":\"sn-003\",\"name\":\"Kinetik Velocity 3\",\"brand\":\"Kinetik\",\"price\":9499,\"rating\":4.5,\"colors\":\"black, red\"},{\"id\":\"sn-004\",\"name\":\"Nivo Tempo Elite\",\"brand\":\"Nivo\",\"price\":14999,\"rating\":4.8,\"colors\":\"black, volt\"},{\"id\":\"sn-005\",\"name\":\"Cloudstep Featherlite\",\"brand\":\"Cloudstep\",\"price\":6999,\"rating\":4.3,\"colors\":\"grey, black\"},{\"id\":\"sn-006\",\"name\":\"Kinetik Stride Daily\",\"brand\":\"Kinetik\",\"price\":5999,\"rating\":4.3,\"colors\":\"black, grey\"},{\"id\":\"sn-009\",\"name\":\"Urbane Midnight Low\",\"brand\":\"Urbane\",\"price\":6499,\"rating\":4.4,\"colors\":\"black\"},{\"id\":\"sn-012\",\"name\":\"Urbane Chunky Volt\",\"brand\":\"Urbane\",\"price\":10999,\"rating\":4.3,\"colors\":\"white, black, volt\"},{\"id\":\"sn-015\",\"name\":\"Kinetik Hangtime Pro\",\"brand\":\"Kinetik\",\"price\":12999,\"rating\":4.7,\"colors\":\"black, gold\"},{\"id\":\"sn-017\",\"name\":\"Urbane Baseline Mid\",\"brand\":\"Urbane\",\"price\":7499,\"rating\":4.2,\"colors\":\"black, white\"},{\"id\":\"sn-020\",\"name\":\"Trailform Ridge GTX\",\"brand\":\"Trailform\",\"price\":13499,\"rating\":4.8,\"colors\":\"olive, black\"},{\"id\":\"sn-022\",\"name\":\"Nivo Terra Grip\",\"brand\":\"Nivo\",\"price\":10499,\"rating\":4.3,\"colors\":\"brown, black\"}]}",
+        "durationMs": 1016
+      }
+    },
+    {
+      "name": "filter_products",
+      "risk": "read",
+      "enabled": true,
+      "source": "manual",
+      "description": "Narrow the product listing by category, color, size, maximum price (INR) and sort order. Filters are applied in the site's own UI; omitted filters are left unchanged. Returns up to 12 products with id, name, price, rating and colors.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "running",
+              "lifestyle",
+              "basketball",
+              "trail"
+            ],
+            "description": "Product category"
+          },
+          "color": {
+            "type": "string",
+            "description": "Color name, e.g. 'black'"
+          },
+          "size": {
+            "type": "string",
+            "description": "UK size 6-12, e.g. '9'"
+          },
+          "max_price": {
+            "type": "number",
+            "description": "Maximum price in INR"
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "price-asc",
+              "price-desc",
+              "rating"
+            ],
+            "description": "Sort order"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/shop",
+          "path": "/shop",
+          "waitFor": {
+            "css": "#category"
+          }
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#category"
+          },
+          "value": "{{input.category}}",
+          "when": "input.category"
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#color"
+          },
+          "value": "{{input.color}}",
+          "when": "input.color"
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#size"
+          },
+          "value": "{{input.size}}",
+          "when": "input.size"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#max-price"
+          },
+          "value": "{{input.max_price}}",
+          "when": "input.max_price"
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#sort"
+          },
+          "value": "{{input.sort}}",
+          "when": "input.sort"
+        },
+        {
+          "op": "waitForDomIdle",
+          "quietMs": 300,
+          "timeoutMs": 4000
+        },
+        {
+          "op": "extractList",
+          "root": {
+            "css": "#product-grid"
+          },
+          "item": "li.product-card",
+          "limit": 12,
+          "as": "items",
+          "fields": {
+            "id": {
+              "attr": "data-product-id"
+            },
+            "name": {
+              "css": ".product-name"
+            },
+            "brand": {
+              "css": ".product-brand"
+            },
+            "price": {
+              "css": ".product-price",
+              "type": "number"
+            },
+            "rating": {
+              "css": ".product-rating",
+              "regex": "([0-9.]+)",
+              "type": "number"
+            },
+            "colors": {
+              "css": ".product-colors"
+            }
+          }
+        },
+        {
+          "op": "return",
+          "value": {
+            "filters": "{{input | json}}",
+            "count": "{{vars.items.length}}",
+            "products": "{{vars.items}}"
+          },
+          "ifEmpty": {
+            "var": "items",
+            "message": "No products match these filters. Relax max_price or size."
+          }
+        }
+      ],
+      "samples": [
+        {
+          "category": "running",
+          "max_price": 10000,
+          "sort": "rating"
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "category": "running",
+          "max_price": 10000,
+          "sort": "rating"
+        },
+        "sampleOutput": "{\"filters\":\"{\\\"category\\\":\\\"running\\\",\\\"max_price\\\":10000,\\\"sort\\\":\\\"rating\\\"}\",\"count\":6,\"products\":[{\"id\":\"sn-001\",\"name\":\"Nivo Pulse Runner\",\"brand\":\"Nivo\",\"price\":8999,\"rating\":4.6,\"colors\":\"black, white\"},{\"id\":\"sn-003\",\"name\":\"Kinetik Velocity 3\",\"brand\":\"Kinetik\",\"price\":9499,\"rating\":4.5,\"colors\":\"black, red\"},{\"id\":\"sn-002\",\"name\":\"Cloudstep Aero Glide\",\"brand\":\"Cloudstep\",\"price\":7499,\"rating\":4.4,\"colors\":\"white, blue\"},{\"id\":\"sn-006\",\"name\":\"Kinetik Stride Daily\",\"brand\":\"Kinetik\",\"price\":5999,\"rating\":4.3,\"colors\":\"black, grey\"},{\"id\":\"sn-005\",\"name\":\"Cloudstep Featherlite\",\"brand\":\"Cloudstep\",\"price\":6999,\"rating\":4.3,\"colors\":\"grey, black\"},{\"id\":\"sn-007\",\"name\":\"Trailform Roadline\",\"brand\":\"Trailform\",\"price\":8499,\"rating\":4.2,\"colors\":\"orange, navy\"}]}",
+        "durationMs": 805
+      }
+    },
+    {
+      "name": "get_product",
+      "risk": "read",
+      "enabled": true,
+      "source": "manual",
+      "description": "Open a product page and return its full details: name, brand, price (INR), rating, available sizes, stock status, description and specs. Use ids from search_products or filter_products, e.g. 'sn-014'.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "Product id such as 'sn-014'"
+          }
+        },
+        "required": [
+          "product_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/product/{{input.product_id}}$",
+          "path": "/product/{{input.product_id}}",
+          "waitFor": {
+            "css": "#product-detail, #product-not-found"
+          }
+        },
+        {
+          "op": "assert",
+          "target": {
+            "css": "#product-not-found"
+          },
+          "state": "notExists",
+          "message": "Product '{{input.product_id}}' does not exist. Use search_products to find valid ids."
+        },
+        {
+          "op": "extractFields",
+          "root": {
+            "css": "#product-detail"
+          },
+          "as": "p",
+          "fields": {
+            "id": {
+              "attr": "data-product-id"
+            },
+            "name": {
+              "css": "#product-title"
+            },
+            "brand": {
+              "css": "#product-brand"
+            },
+            "price": {
+              "css": "#product-price",
+              "type": "number"
+            },
+            "rating": {
+              "css": "#product-rating",
+              "regex": "([0-9.]+)",
+              "type": "number"
+            },
+            "stock": {
+              "css": "#stock-status"
+            },
+            "description": {
+              "css": "#product-desc"
+            }
+          }
+        },
+        {
+          "op": "extractList",
+          "root": {
+            "css": "#size-select"
+          },
+          "item": "option:not([disabled])",
+          "as": "sizes",
+          "limit": 20,
+          "fields": {
+            "size": {
+              "attr": "value"
+            }
+          }
+        },
+        {
+          "op": "extractList",
+          "root": {
+            "css": "#product-specs"
+          },
+          "item": "li",
+          "as": "specs",
+          "limit": 8,
+          "fields": {
+            "k": {
+              "css": ".spec-label"
+            },
+            "v": {
+              "css": ".spec-value"
+            }
+          }
+        },
+        {
+          "op": "return",
+          "value": {
+            "product": "{{vars.p}}",
+            "sizes": "{{vars.sizes}}",
+            "specs": "{{vars.specs}}"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "product_id": "sn-014"
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "product_id": "sn-014"
+        },
+        "sampleOutput": "{\"product\":{\"id\":\"sn-014\",\"name\":\"Nivo Skyline Hi\",\"brand\":\"Nivo\",\"price\":6999,\"rating\":4.2,\"stock\":\"24 in stock\",\"description\":\"High-top silhouette with padded collar and navy leather panels. A weekend staple.\"},\"sizes\":[{\"size\":\"6\"},{\"size\":\"7\"},{\"size\":\"8\"},{\"size\":\"9\"},{\"size\":\"10\"},{\"size\":\"11\"},{\"size\":\"12\"}],\"specs\":[{\"k\":\"Weight\",\"v\":\"395 g\"},{\"k\":\"Drop\",\"v\":\"0 mm\"},{\"k\":\"Upper\",\"v\":\"Leather and canvas\"},{\"k\":\"Sole\",\"v\":\"Cupsole rubber\"},{\"k\":\"Category\",\"v\":\"lifestyle\"},{\"k\":\"Reviews\",\"v\":\"120\"}]}",
+        "durationMs": 468
+      }
+    },
+    {
+      "name": "compare_products",
+      "risk": "read",
+      "enabled": true,
+      "source": "manual",
+      "description": "Compare 2-4 products side by side (price, rating, reviews, weight, sizes, stock) using the store's catalog data. Does not change the page. Use ids from search_products or filter_products.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "product_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "2 to 4 product ids"
+          }
+        },
+        "required": [
+          "product_ids"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "fetchJson",
+          "url": "/data/products.json",
+          "as": "catalog"
+        },
+        {
+          "op": "filterList",
+          "from": "vars.catalog",
+          "where": [
+            {
+              "field": "id",
+              "op": "in",
+              "value": "{{input.product_ids}}"
+            }
+          ],
+          "limit": 4,
+          "pick": [
+            "id",
+            "name",
+            "brand",
+            "price",
+            "rating",
+            "reviews",
+            "weightGrams",
+            "sizes",
+            "stock"
+          ],
+          "as": "rows"
+        },
+        {
+          "op": "return",
+          "value": {
+            "compared": "{{vars.rows}}"
+          },
+          "ifEmpty": {
+            "var": "rows",
+            "message": "None of the ids were found: {{input.product_ids}}."
+          }
+        }
+      ],
+      "samples": [
+        {
+          "product_ids": [
+            "sn-014",
+            "sn-003",
+            "sn-021"
+          ]
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "product_ids": [
+            "sn-014",
+            "sn-003",
+            "sn-021"
+          ]
+        },
+        "sampleOutput": "{\"compared\":[{\"id\":\"sn-003\",\"name\":\"Kinetik Velocity 3\",\"brand\":\"Kinetik\",\"price\":9499,\"rating\":4.5,\"reviews\":211,\"weightGrams\":238,\"sizes\":[\"6\",\"7\",\"8\",\"9\",\"10\",\"11\",\"12\"],\"stock\":18},{\"id\":\"sn-014\",\"name\":\"Nivo Skyline Hi\",\"brand\":\"Nivo\",\"price\":6999,\"rating\":4.2,\"reviews\":120,\"weightGrams\":395,\"sizes\":[\"6\",\"7\",\"8\",\"9\",\"10\",\"11\",\"12\"],\"stock\":24},{\"id\":\"sn-021\",\"name\":\"Trailform Summit Lite\",\"brand\":\"Trailform\",\"price\":9499,\"rating\":4.6,\"reviews\":145,\"weightGrams\":285,\"sizes\":[\"6\",\"7\",\"8\",\"9\",\"10\",\"11\",\"12\"],\"stock\":19}]}",
+        "durationMs": 463
+      }
+    },
+    {
+      "name": "add_to_cart",
+      "risk": "reversible",
+      "enabled": true,
+      "source": "manual",
+      "description": "Add a product to the shopping cart in the chosen size and quantity. Reversible: items can be removed on the cart page. Returns the new cart item count.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "Product id such as 'sn-014'"
+          },
+          "size": {
+            "type": "string",
+            "description": "UK size, must be one of the product's available sizes"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 1,
+            "description": "Quantity, default 1"
+          }
+        },
+        "required": [
+          "product_id",
+          "size"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/product/{{input.product_id}}$",
+          "path": "/product/{{input.product_id}}",
+          "waitFor": {
+            "css": "#product-detail, #product-not-found"
+          }
+        },
+        {
+          "op": "assert",
+          "target": {
+            "css": "#product-not-found"
+          },
+          "state": "notExists",
+          "message": "Product '{{input.product_id}}' does not exist."
+        },
+        {
+          "op": "assert",
+          "target": {
+            "css": "#stock-status",
+            "text": "out of stock"
+          },
+          "state": "notExists",
+          "message": "Product {{input.product_id}} is out of stock."
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#size-select"
+          },
+          "value": "{{input.size}}"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#qty"
+          },
+          "value": "{{input.quantity | default:1}}"
+        },
+        {
+          "op": "click",
+          "target": {
+            "css": "#add-to-cart"
+          }
+        },
+        {
+          "op": "waitFor",
+          "target": {
+            "css": "#toast.show"
+          },
+          "state": "visible",
+          "timeoutMs": 3000,
+          "errorHint": "The add-to-cart confirmation did not appear; check get_cart before retrying."
+        },
+        {
+          "op": "extractText",
+          "target": {
+            "css": "#cart-count"
+          },
+          "type": "number",
+          "as": "count"
+        },
+        {
+          "op": "return",
+          "value": {
+            "added": {
+              "product_id": "{{input.product_id}}",
+              "size": "{{input.size}}",
+              "quantity": "{{input.quantity | default:1}}"
+            },
+            "cart_item_count": "{{vars.count}}"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "product_id": "sn-014",
+          "size": "9",
+          "quantity": 1
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "product_id": "sn-014",
+          "size": "9",
+          "quantity": 1
+        },
+        "sampleOutput": "{\"added\":{\"product_id\":\"sn-014\",\"size\":\"9\",\"quantity\":1},\"cart_item_count\":1}",
+        "durationMs": 475
+      }
+    },
+    {
+      "name": "get_cart",
+      "risk": "read",
+      "enabled": true,
+      "source": "manual",
+      "description": "Show the current shopping cart: line items with product id, name, size, quantity and line total, plus the subtotal in INR.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/cart",
+          "path": "/cart",
+          "waitFor": {
+            "css": "#cart-page"
+          }
+        },
+        {
+          "op": "extractList",
+          "root": {
+            "css": "#cart-page"
+          },
+          "item": "tr.cart-row",
+          "limit": 20,
+          "as": "items",
+          "fields": {
+            "id": {
+              "attr": "data-product-id"
+            },
+            "name": {
+              "css": ".cart-name"
+            },
+            "size": {
+              "css": ".cart-size"
+            },
+            "qty": {
+              "css": ".cart-qty",
+              "type": "number"
+            },
+            "line_total": {
+              "css": ".cart-line-total",
+              "type": "number"
+            }
+          }
+        },
+        {
+          "op": "extractText",
+          "target": {
+            "css": "#cart-subtotal"
+          },
+          "type": "number",
+          "as": "subtotal",
+          "optional": true
+        },
+        {
+          "op": "return",
+          "value": {
+            "items": "{{vars.items}}",
+            "subtotal": "{{vars.subtotal}}"
+          },
+          "ifEmpty": {
+            "var": "items",
+            "message": "The cart is empty."
+          }
+        }
+      ],
+      "samples": [
+        {}
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {},
+        "sampleOutput": "{\"items\":[{\"id\":\"sn-014\",\"name\":\"Nivo Skyline Hi\",\"size\":\"9\",\"qty\":1,\"line_total\":6999}],\"subtotal\":6999}",
+        "durationMs": 465
+      }
+    },
+    {
+      "name": "proceed_to_checkout",
+      "risk": "reversible",
+      "enabled": true,
+      "source": "manual",
+      "description": "Open the checkout page for the current cart. Does not place an order. Returns the order total and the fields required by place_order.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": false
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/cart",
+          "path": "/cart",
+          "waitFor": {
+            "css": "#cart-page"
+          }
+        },
+        {
+          "op": "assert",
+          "target": {
+            "css": "tr.cart-row"
+          },
+          "state": "exists",
+          "message": "The cart is empty. Add products with add_to_cart first."
+        },
+        {
+          "op": "click",
+          "target": {
+            "css": "#checkout-link"
+          }
+        },
+        {
+          "op": "waitFor",
+          "target": {
+            "css": "#checkout-form"
+          },
+          "state": "visible",
+          "timeoutMs": 4000
+        },
+        {
+          "op": "extractText",
+          "target": {
+            "css": "#checkout-total"
+          },
+          "type": "number",
+          "as": "total"
+        },
+        {
+          "op": "return",
+          "value": {
+            "checkout_open": true,
+            "total": "{{vars.total}}",
+            "required_fields": [
+              "full_name",
+              "email",
+              "address",
+              "city",
+              "pincode",
+              "payment"
+            ]
+          }
+        }
+      ],
+      "samples": [
+        {}
+      ],
+      "verification": {
+        "status": "passed",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {},
+        "sampleOutput": "{\"checkout_open\":true,\"total\":6999,\"required_fields\":[\"full_name\",\"email\",\"address\",\"city\",\"pincode\",\"payment\"]}",
+        "durationMs": 477
+      }
+    },
+    {
+      "name": "place_order",
+      "risk": "sensitive",
+      "enabled": true,
+      "source": "manual",
+      "description": "Fill the checkout form and place the order for everything in the cart. The shopper must confirm in an on-page dialog before the order is submitted. Call proceed_to_checkout first. Returns the order id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "description": "Shopper's full name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email for the order confirmation"
+          },
+          "address": {
+            "type": "string",
+            "description": "Street address"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "pincode": {
+            "type": "string",
+            "description": "6-digit Indian postal code"
+          },
+          "payment": {
+            "type": "string",
+            "enum": [
+              "cod",
+              "card"
+            ],
+            "description": "cod = cash on delivery, card = card on delivery"
+          }
+        },
+        "required": [
+          "full_name",
+          "email",
+          "address",
+          "city",
+          "pincode",
+          "payment"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": false
+      },
+      "recipe": [
+        {
+          "op": "ensurePage",
+          "urlPattern": "^/checkout",
+          "path": "/checkout",
+          "waitFor": {
+            "css": "#checkout-form"
+          },
+          "errorHint": "Call proceed_to_checkout first (the cart may be empty)."
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#full-name"
+          },
+          "value": "{{input.full_name}}"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#email"
+          },
+          "value": "{{input.email}}"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#address"
+          },
+          "value": "{{input.address}}"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#city"
+          },
+          "value": "{{input.city}}"
+        },
+        {
+          "op": "fill",
+          "target": {
+            "css": "#pincode"
+          },
+          "value": "{{input.pincode}}"
+        },
+        {
+          "op": "select",
+          "target": {
+            "css": "#payment"
+          },
+          "value": "{{input.payment}}"
+        },
+        {
+          "op": "extractText",
+          "target": {
+            "css": "#checkout-total"
+          },
+          "as": "total"
+        },
+        {
+          "op": "confirm",
+          "title": "Place this order?",
+          "message": "An agent wants to place an order of {{vars.total}} for {{input.full_name}}, paying by {{input.payment}}.",
+          "details": [
+            "Ship to: {{input.address}}, {{input.city}} {{input.pincode}}",
+            "Email: {{input.email}}"
+          ]
+        },
+        {
+          "op": "click",
+          "target": {
+            "css": "#place-order"
+          }
+        },
+        {
+          "op": "waitFor",
+          "target": {
+            "css": "#order-id"
+          },
+          "state": "visible",
+          "timeoutMs": 6000
+        },
+        {
+          "op": "extractText",
+          "target": {
+            "css": "#order-id"
+          },
+          "as": "orderId"
+        },
+        {
+          "op": "return",
+          "value": {
+            "order_placed": true,
+            "order_id": "{{vars.orderId}}",
+            "total": "{{vars.total}}"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "full_name": "Asha Rao",
+          "email": "asha@example.com",
+          "address": "12 MG Road",
+          "city": "Bengaluru",
+          "pincode": "560001",
+          "payment": "cod"
+        }
+      ],
+      "verification": {
+        "status": "skipped",
+        "checkedAt": "2026-09-02T10:47:07.474Z",
+        "sampleInput": {
+          "full_name": "Asha Rao",
+          "email": "asha@example.com",
+          "address": "12 MG Road",
+          "city": "Bengaluru",
+          "pincode": "560001",
+          "payment": "cod"
+        },
+        "error": "sensitive tools are dry-run (confirm UI not completed in headless verify)",
+        "durationMs": 20470
+      }
+    }
+  ]
+}

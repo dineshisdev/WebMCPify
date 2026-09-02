@@ -1,0 +1,17 @@
+# Second Netlify site, same GitHub repo, base directory = demo-site/
+[build]
+  publish = "."
+  command = ""
+
+# SPA fallback so deep links like /product/sn-001 load index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Origin-Agent-Cluster = "?1"
+    Permissions-Policy = "tools=(self)"
+    X-Content-Type-Options = "nosniff"

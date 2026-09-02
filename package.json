@@ -6,21 +6,33 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:bridge": "node bridge/build.mjs",
+    "dev:worker": "npm --prefix worker run dev",
+    "deploy:worker": "npm run build:bridge && npm --prefix worker exec wrangler deploy",
+    "dev:analyzer": "npm --prefix analyzer run dev",
+    "dev:demo": "npx -y serve -s demo-site -l 8080"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.56",
+    "@upstash/redis": "^1.38.3",
+    "ai": "^7.0.90",
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "use-webmcp-tool": "^0.2.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webmcp-types": "^0.1.5"
   }
 }

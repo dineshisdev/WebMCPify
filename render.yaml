@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: webmcpify-analyzer
+    runtime: docker
+    dockerfilePath: ./analyzer/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: BRIDGE_URL
+        sync: false
+      - key: ANALYZER_TOKEN
+        sync: false

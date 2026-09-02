@@ -24,6 +24,7 @@
 WebMCPify_Project_Idea.md
 AGENTS.md
 CLAUDE.md
+SUBMISSION.md
 
 # misc
 .DS_Store
@@ -37,6 +38,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local file-store for SiteDocs when Upstash is unset
+.data/
 
 # vercel
 .vercel
