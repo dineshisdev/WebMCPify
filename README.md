@@ -10,9 +10,11 @@ Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com).
 
 **https://webmcpify.netlify.app** — paste any public URL. It crawls the site, writes a few tools, checks each one on the live page, and hands back a URL agents can use. About a minute.
 
-### Or skip the wait
+### Or try the demo
 
-**Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/ · **same shop, untouched:** https://stride-legacy.netlify.app/
+**Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/
+
+**Original shop (no tools):** https://stride-legacy.netlify.app/
 
 It never had WebMCP. Now it has `search_products` · `filter_products` · `get_product` · `compare_products` · `add_to_cart` · `get_cart` · `proceed_to_checkout` · `place_order`.
 
