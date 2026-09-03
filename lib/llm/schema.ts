@@ -149,6 +149,10 @@ function toStrictNode(node: unknown): void {
   if (!node || typeof node !== 'object') return;
   const n = node as Record<string, unknown>;
   for (const k of UNSUPPORTED) delete n[k];
+  if (Array.isArray(n.oneOf)) {
+    n.anyOf = n.oneOf;
+    delete n.oneOf;
+  }
   if (n.type === 'object' && n.properties && typeof n.properties === 'object') {
     const props = n.properties as Record<string, unknown>;
     n.required = Object.keys(props);
