@@ -14,41 +14,84 @@ export const FieldZ = z.object({
   type: z.enum(['string', 'number', 'boolean']).nullable(),
 });
 
-const base = {
+export const WhereZ = z.object({
+  field: z.string().max(40),
+  op: z.enum(['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'contains', 'in']),
+  value: z.string().max(200),
+});
+
+const STEP_OPS = [
+  'ensurePage',
+  'navigate',
+  'fill',
+  'type',
+  'press',
+  'click',
+  'select',
+  'check',
+  'waitFor',
+  'waitForDomIdle',
+  'waitForUrl',
+  'assert',
+  'extractText',
+  'extractFields',
+  'extractList',
+  'fetchJson',
+  'readStorage',
+  'filterList',
+  'setUrlState',
+  'confirm',
+  'return',
+] as const;
+
+/**
+ * Flat step object (no discriminatedUnion). OpenAI structured outputs reject
+ * nested `oneOf`, which is what z.discriminatedUnion compiles to.
+ * Unused fields must be null. `toStep` in postprocess drops incomplete ops.
+ */
+export const StepZ = z.object({
+  op: z.enum(STEP_OPS).describe('Recipe opcode; set unused fields to null'),
   when: z.string().nullable().describe("Template path such as 'input.size'; step skipped when empty"),
   optional: z.boolean().nullable().describe('Swallow TARGET_NOT_FOUND for this step'),
   errorHint: z.string().max(200).nullable().describe('Actionable hint appended to errors from this step'),
-};
-
-export const StepZ = z.discriminatedUnion('op', [
-  z.object({ op: z.literal('ensurePage'), ...base, urlPattern: z.string().max(200), path: z.string().max(300), waitForCss: z.string().max(200).nullable() }),
-  z.object({ op: z.literal('navigate'), ...base, path: z.string().max(300) }),
-  z.object({ op: z.literal('fill'), ...base, target: LocatorZ, value: z.string().max(300) }),
-  z.object({ op: z.literal('type'), ...base, target: LocatorZ, value: z.string().max(300), pressEnter: z.boolean().nullable() }),
-  z.object({ op: z.literal('press'), ...base, key: z.enum(['Enter', 'Escape', 'Tab', 'ArrowDown']), target: LocatorZ.nullable() }),
-  z.object({ op: z.literal('click'), ...base, target: LocatorZ }),
-  z.object({ op: z.literal('select'), ...base, target: LocatorZ, value: z.string().max(200) }),
-  z.object({ op: z.literal('check'), ...base, target: LocatorZ, checked: z.boolean() }),
-  z.object({ op: z.literal('waitFor'), ...base, target: LocatorZ, state: z.enum(['visible', 'hidden', 'attached', 'detached']), timeoutMs: z.number().int().nullable() }),
-  z.object({ op: z.literal('waitForDomIdle'), ...base }),
-  z.object({ op: z.literal('waitForUrl'), ...base, pattern: z.string().max(200) }),
-  z.object({ op: z.literal('assert'), ...base, target: LocatorZ, state: z.enum(['exists', 'notExists']), message: z.string().max(200) }),
-  z.object({ op: z.literal('extractText'), ...base, target: LocatorZ, attr: z.string().max(40).nullable(), regex: z.string().max(80).nullable(), type: z.enum(['string', 'number']).nullable(), as: z.string().max(30) }),
-  z.object({ op: z.literal('extractFields'), ...base, rootCss: z.string().max(200).nullable(), fields: z.array(FieldZ).min(1).max(12), as: z.string().max(30) }),
-  z.object({ op: z.literal('extractList'), ...base, rootCss: z.string().max(200).nullable(), item: z.string().max(200), fields: z.array(FieldZ).min(1).max(10), limit: z.number().int().nullable(), as: z.string().max(30) }),
-  z.object({ op: z.literal('fetchJson'), ...base, url: z.string().max(300), method: z.enum(['GET', 'POST']).nullable(), bodyJson: z.string().max(1000).nullable(), pick: z.string().max(60).nullable(), as: z.string().max(30) }),
-  z.object({ op: z.literal('readStorage'), ...base, key: z.string().max(60), parseJson: z.boolean().nullable(), as: z.string().max(30) }),
-  z.object({
-    op: z.literal('filterList'), ...base,
-    from: z.string().max(60).describe("Template path of a list, e.g. 'vars.catalog'"),
-    where: z.array(z.object({ field: z.string().max(40), op: z.enum(['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'contains', 'in']), value: z.string().max(200) })).nullable(),
-    sortBy: z.string().max(40).nullable(), order: z.enum(['asc', 'desc']).nullable(), limit: z.number().int().nullable(),
-    pick: z.array(z.string().max(40)).nullable(), as: z.string().max(30),
-  }),
-  z.object({ op: z.literal('setUrlState'), ...base, path: z.string().max(300).nullable(), paramsJson: z.string().max(500).nullable() }),
-  z.object({ op: z.literal('confirm'), ...base, title: z.string().max(80), message: z.string().max(300), details: z.array(z.string().max(120)).nullable() }),
-  z.object({ op: z.literal('return'), ...base, valueJson: z.string().max(1500).describe('JSON object; strings may contain {{templates}}'), ifEmptyVar: z.string().max(30).nullable(), ifEmptyMessage: z.string().max(200).nullable() }),
-]);
+  urlPattern: z.string().max(200).nullable().describe('ensurePage: regex over the pathname'),
+  path: z.string().max(300).nullable().describe('ensurePage / navigate / setUrlState path'),
+  waitForCss: z.string().max(200).nullable().describe('ensurePage: CSS to wait for after pushState'),
+  target: LocatorZ.nullable().describe('Locator for fill/type/press/click/select/check/waitFor/assert/extractText'),
+  value: z.string().max(300).nullable().describe('fill / type / select value; may contain {{templates}}'),
+  pressEnter: z.boolean().nullable(),
+  key: z.enum(['Enter', 'Escape', 'Tab', 'ArrowDown']).nullable().describe('press key'),
+  checked: z.boolean().nullable(),
+  state: z.enum(['visible', 'hidden', 'attached', 'detached', 'exists', 'notExists']).nullable(),
+  timeoutMs: z.number().int().nullable(),
+  pattern: z.string().max(200).nullable().describe('waitForUrl regex'),
+  message: z.string().max(200).nullable().describe('assert / fail message'),
+  attr: z.string().max(40).nullable(),
+  regex: z.string().max(80).nullable(),
+  type: z.enum(['string', 'number', 'boolean']).nullable(),
+  as: z.string().max(30).nullable().describe('Variable name to store extract/fetch/filter results'),
+  rootCss: z.string().max(200).nullable(),
+  fields: z.array(FieldZ).nullable(),
+  item: z.string().max(200).nullable().describe('extractList: CSS for each item relative to root'),
+  limit: z.number().int().nullable(),
+  url: z.string().max(300).nullable().describe('fetchJson URL'),
+  method: z.enum(['GET', 'POST']).nullable(),
+  bodyJson: z.string().max(1000).nullable(),
+  pick: z.string().max(60).nullable().describe('fetchJson: dotted path into the JSON body'),
+  pickFields: z.array(z.string().max(40)).nullable().describe('filterList: field names to keep'),
+  storageKey: z.string().max(60).nullable().describe('readStorage key'),
+  parseJson: z.boolean().nullable(),
+  from: z.string().max(60).nullable().describe("filterList: template path of a list, e.g. 'vars.catalog'"),
+  where: z.array(WhereZ).nullable(),
+  sortBy: z.string().max(40).nullable(),
+  order: z.enum(['asc', 'desc']).nullable(),
+  paramsJson: z.string().max(500).nullable().describe('setUrlState query params as JSON object string'),
+  title: z.string().max(80).nullable(),
+  details: z.array(z.string().max(120)).nullable(),
+  valueJson: z.string().max(1500).nullable().describe('return: JSON object; strings may contain {{templates}}'),
+  ifEmptyVar: z.string().max(30).nullable(),
+  ifEmptyMessage: z.string().max(200).nullable(),
+});
 
 export const ParamZ = z.object({
   name: z.string().max(30),

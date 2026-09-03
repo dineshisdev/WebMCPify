@@ -24,7 +24,7 @@ export const DSL_CHEATSHEET = `Recipe step ops (JSON objects with "op"; every st
 - extractText{target, attr?, regex?, type?, as} / extractFields{rootCss?, fields[], as} / extractList{rootCss?, item, fields[], limit?, as}
   fields[] = {name, css? (relative to item; null = item itself), attr? ('text' default, 'href', 'src', 'value', or an attribute like data-id), regex?, type?}
 - fetchJson{url, method?, bodyJson?, pick?, as}: same-origin JSON endpoint from the model
-- readStorage{key, parseJson?, as} / filterList{from, where[]?, sortBy?, order?, limit?, pick[]?, as} / setUrlState{path?, paramsJson?}
+- readStorage{storageKey, parseJson?, as} / filterList{from, where[]?, sortBy?, order?, limit?, pickFields[]?, as} / setUrlState{path?, paramsJson?}
 - confirm{title, message, details[]?}: in-page human confirmation (required before sensitive commits)
 - return{valueJson, ifEmptyVar?, ifEmptyMessage?}
 Templates: {{input.x}}, {{vars.x}}, {{vars.x.length}}, {{page.path}}, filters "| default:1" and "| json". A string that is exactly one template resolves to the raw value (arrays/objects preserved).`;

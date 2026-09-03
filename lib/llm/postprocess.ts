@@ -26,7 +26,8 @@ function clean<T extends object>(o: T): T {
   return out as T;
 }
 
-function loc(l: { css: string; text?: string | null; nth?: number | null }): Locator {
+function loc(l: { css: string; text?: string | null; nth?: number | null } | null | undefined): Locator | null {
+  if (!l?.css) return null;
   return clean({ css: l.css, text: l.text ?? undefined, nth: l.nth ?? undefined });
 }
 
@@ -45,44 +46,86 @@ function parseJson(s: string | null | undefined, fallback: unknown): unknown {
   }
 }
 
-function toStep(g: GeneratedStep, warnings: string[]): Step {
+function drop(op: string, reason: string, warnings: string[]): null {
+  warnings.push(`${op} dropped: ${reason}`);
+  return null;
+}
+
+function toStep(g: GeneratedStep, warnings: string[]): Step | null {
   const base = clean({ when: g.when ?? undefined, optional: g.optional ?? undefined, errorHint: g.errorHint ?? undefined });
   switch (g.op) {
     case 'ensurePage':
+      if (!g.urlPattern || !g.path) return drop(g.op, 'urlPattern and path required', warnings);
       return { ...base, op: 'ensurePage', urlPattern: g.urlPattern, path: g.path, ...(g.waitForCss ? { waitFor: { css: g.waitForCss } } : {}) };
     case 'navigate':
+      if (!g.path) return drop(g.op, 'path required', warnings);
       return { ...base, op: 'navigate', path: g.path };
-    case 'fill':
-      return { ...base, op: 'fill', target: loc(g.target), value: g.value };
-    case 'type':
-      return { ...base, op: 'type', target: loc(g.target), value: g.value, ...(g.pressEnter ? { pressEnter: true } : {}) };
+    case 'fill': {
+      const target = loc(g.target);
+      if (!target || g.value == null) return drop(g.op, 'target.css and value required', warnings);
+      return { ...base, op: 'fill', target, value: g.value };
+    }
+    case 'type': {
+      const target = loc(g.target);
+      if (!target || g.value == null) return drop(g.op, 'target.css and value required', warnings);
+      return { ...base, op: 'type', target, value: g.value, ...(g.pressEnter ? { pressEnter: true } : {}) };
+    }
     case 'press':
-      return { ...base, op: 'press', key: g.key, ...(g.target ? { target: loc(g.target) } : {}) };
-    case 'click':
-      return { ...base, op: 'click', target: loc(g.target) };
-    case 'select':
-      return { ...base, op: 'select', target: loc(g.target), value: g.value };
-    case 'check':
-      return { ...base, op: 'check', target: loc(g.target), checked: g.checked };
-    case 'waitFor':
-      return { ...base, op: 'waitFor', target: loc(g.target), state: g.state, ...(g.timeoutMs ? { timeoutMs: g.timeoutMs } : {}) };
+      if (!g.key) return drop(g.op, 'key required', warnings);
+      return { ...base, op: 'press', key: g.key, ...(loc(g.target) ? { target: loc(g.target)! } : {}) };
+    case 'click': {
+      const target = loc(g.target);
+      if (!target) return drop(g.op, 'target.css required', warnings);
+      return { ...base, op: 'click', target };
+    }
+    case 'select': {
+      const target = loc(g.target);
+      if (!target || g.value == null) return drop(g.op, 'target.css and value required', warnings);
+      return { ...base, op: 'select', target, value: g.value };
+    }
+    case 'check': {
+      const target = loc(g.target);
+      if (!target || g.checked == null) return drop(g.op, 'target.css and checked required', warnings);
+      return { ...base, op: 'check', target, checked: g.checked };
+    }
+    case 'waitFor': {
+      const target = loc(g.target);
+      if (!target || !g.state || g.state === 'exists' || g.state === 'notExists') {
+        return drop(g.op, 'target.css and state visible|hidden|attached|detached required', warnings);
+      }
+      return { ...base, op: 'waitFor', target, state: g.state, ...(g.timeoutMs ? { timeoutMs: g.timeoutMs } : {}) };
+    }
     case 'waitForDomIdle':
       return { ...base, op: 'waitForDomIdle' };
     case 'waitForUrl':
+      if (!g.pattern) return drop(g.op, 'pattern required', warnings);
       return { ...base, op: 'waitForUrl', pattern: g.pattern };
-    case 'assert':
-      return { ...base, op: 'assert', target: loc(g.target), state: g.state, message: g.message };
-    case 'extractText':
-      return { ...base, op: 'extractText', target: loc(g.target), as: g.as, ...clean({ attr: g.attr ?? undefined, regex: g.regex ?? undefined, type: g.type ?? undefined }) };
+    case 'assert': {
+      const target = loc(g.target);
+      if (!target || (g.state !== 'exists' && g.state !== 'notExists') || !g.message) {
+        return drop(g.op, 'target.css, state exists|notExists, and message required', warnings);
+      }
+      return { ...base, op: 'assert', target, state: g.state, message: g.message };
+    }
+    case 'extractText': {
+      const target = loc(g.target);
+      if (!target || !g.as) return drop(g.op, 'target.css and as required', warnings);
+      return { ...base, op: 'extractText', target, as: g.as, ...clean({ attr: g.attr ?? undefined, regex: g.regex ?? undefined, type: g.type === 'boolean' ? undefined : (g.type ?? undefined) }) };
+    }
     case 'extractFields':
+      if (!g.as || !g.fields?.length) return drop(g.op, 'fields[] and as required', warnings);
       return { ...base, op: 'extractFields', ...(g.rootCss ? { root: { css: g.rootCss } } : {}), fields: fields(g.fields), as: g.as };
     case 'extractList':
+      if (!g.as || !g.item || !g.fields?.length) return drop(g.op, 'item, fields[] and as required', warnings);
       return { ...base, op: 'extractList', ...(g.rootCss ? { root: { css: g.rootCss } } : {}), item: g.item, fields: fields(g.fields), as: g.as, limit: Math.min(g.limit ?? 12, 20) };
     case 'fetchJson':
+      if (!g.url || !g.as) return drop(g.op, 'url and as required', warnings);
       return { ...base, op: 'fetchJson', url: g.url, as: g.as, ...clean({ method: g.method ?? undefined, body: g.bodyJson ? parseJson(g.bodyJson, undefined) : undefined, pick: g.pick ?? undefined }) };
     case 'readStorage':
-      return { ...base, op: 'readStorage', key: g.key, as: g.as, ...(g.parseJson ? { parse: 'json' as const } : {}) };
+      if (!g.storageKey || !g.as) return drop(g.op, 'storageKey and as required', warnings);
+      return { ...base, op: 'readStorage', key: g.storageKey, as: g.as, ...(g.parseJson ? { parse: 'json' as const } : {}) };
     case 'filterList':
+      if (!g.from || !g.as) return drop(g.op, 'from and as required', warnings);
       return {
         ...base,
         op: 'filterList',
@@ -93,12 +136,13 @@ function toStep(g: GeneratedStep, warnings: string[]): Step {
           sortBy: g.sortBy ?? undefined,
           order: g.order ?? undefined,
           limit: g.limit ?? undefined,
-          pick: g.pick ?? undefined,
+          pick: g.pickFields ?? undefined,
         }),
       };
     case 'setUrlState':
       return { ...base, op: 'setUrlState', ...clean({ path: g.path ?? undefined, params: g.paramsJson ? (parseJson(g.paramsJson, undefined) as Record<string, string> | undefined) : undefined }) };
     case 'confirm':
+      if (!g.title || !g.message) return drop(g.op, 'title and message required', warnings);
       return { ...base, op: 'confirm', title: g.title, message: g.message, ...(g.details ? { details: g.details } : {}) };
     case 'return': {
       let value = parseJson(g.valueJson, undefined);
@@ -205,7 +249,11 @@ function capRecipe(steps: Step[]): Step[] {
 
 export function postprocessTool(g: GeneratedTool, model: CapabilityModel | null, source: ToolDef['source'] = 'generated'): PostprocessResult {
   const warnings: string[] = [];
-  const steps = g.recipe.map((s) => toStep(s, warnings));
+  const steps = g.recipe.map((s) => toStep(s, warnings)).filter((s): s is Step => s !== null);
+  if (!steps.length) {
+    warnings.push('recipe was empty after dropping incomplete steps');
+    steps.push({ op: 'return', value: { ok: false, error: 'empty recipe' } });
+  }
 
   let risk: Risk = g.risk;
   if (risk !== 'sensitive' && stepsAreSensitive(steps, model)) {
