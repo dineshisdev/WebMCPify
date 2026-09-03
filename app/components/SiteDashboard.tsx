@@ -108,6 +108,7 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
   const passed = tools.filter((t) => t.verification.status === 'passed').length;
   const st = STATUS[doc.status];
   const s = doc.capabilityStats;
+  const fail = doc.error ? humanizeError(doc.error) : null;
 
   function updateTool(t: ToolDef) {
     if (!manifest) return;
@@ -236,25 +237,33 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
       )}
 
       {(busy || doc.status === 'error') && (
-        <Card className="p-4">
-          <div className="mb-2 flex items-center gap-2">
+        <Card className="overflow-hidden p-4">
+          <div className="mb-3 flex items-center gap-2">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">Pipeline</h2>
+            {busy && (
+              <span className="text-[11px] text-fg-subtle">running…</span>
+            )}
             {doc.status === 'error' && (
               <button
                 onClick={retry}
-                className="ml-auto cursor-pointer rounded-lg bg-fg px-2.5 py-1 text-xs font-semibold text-surface transition-opacity hover:opacity-90"
+                className="ml-auto cursor-pointer rounded-lg bg-fg px-3 py-1.5 text-xs font-semibold text-surface transition-opacity hover:opacity-90"
               >
                 Retry
               </button>
             )}
           </div>
-          <ol className="scroll-x max-h-44 space-y-1 overflow-y-auto font-mono text-[11px] leading-relaxed text-fg-muted">
+          <ol className="max-h-52 space-y-1.5 overflow-y-auto overflow-x-hidden pr-1 font-mono text-[12px] leading-relaxed text-fg-muted [scrollbar-width:thin]">
             {doc.progress.map((p, i) => (
-              <li key={i} className="whitespace-nowrap">{p}</li>
+              <li key={i} className="break-words">
+                {p}
+              </li>
             ))}
           </ol>
-          {doc.error && (
-            <p className="mt-2 rounded-lg bg-danger-subtle px-2.5 py-2 text-xs text-danger ring-1 ring-inset ring-danger-border">{doc.error}</p>
+          {fail && (
+            <div className="mt-3 rounded-lg bg-danger-subtle p-3 ring-1 ring-inset ring-danger-border" role="alert">
+              <p className="text-sm font-semibold text-danger">{fail.title}</p>
+              <p className="mt-1 text-[13px] leading-relaxed break-words text-danger/90">{fail.detail}</p>
+            </div>
           )}
         </Card>
       )}
@@ -284,19 +293,27 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
         </section>
       )}
 
-      <Card className="p-4">
+      {doc.status === 'ready' && tools.length > 0 && (
+        <Card className="p-4">
         <h2 className="text-sm font-semibold text-fg">How to test</h2>
         <ol className="mt-2 space-y-2 text-[13px] leading-relaxed text-fg-muted">
           <li className="flex gap-2.5">
             <Step n={1} />
             <span>
-              <strong className="font-semibold text-fg">Chrome 149+</strong> — turn on <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">chrome://flags/#enable-webmcp-testing</code>, open the agent-ready URL, then DevTools → Application → WebMCP. Run <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">search_products</code> with <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">{`{ "query": "black" }`}</code>.
+              <strong className="font-semibold text-fg">Chrome 149+</strong> — turn on <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">chrome://flags/#enable-webmcp-testing</code>, open the agent-ready URL, then DevTools → Application → WebMCP. Run <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">{tools[0]?.name ?? 'a tool'}</code>
+              {tools[0]?.samples[0] ? (
+                <>
+                  {' '}with <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">{JSON.stringify(tools[0].samples[0])}</code>
+                </>
+              ) : (
+                '.'
+              )}
             </span>
           </li>
           <li className="flex gap-2.5">
             <Step n={2} />
             <span>
-              <strong className="font-semibold text-fg">ChatGPT desktop</strong> — same URL in the in-app browser, site-tools arrow in the address bar. Ask: “Find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart.”
+              <strong className="font-semibold text-fg">ChatGPT desktop</strong> — same URL in the in-app browser, site-tools arrow in the address bar. Ask it to use the tools on this page.
             </span>
           </li>
           <li className="flex gap-2.5">
@@ -307,9 +324,10 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
           </li>
         </ol>
         <p className="mt-3 border-t pt-3 text-xs text-fg-subtle">
-          Sensitive tools like <code className="font-mono">place_order</code> always ask a human to confirm on the page.
+          Sensitive tools always ask a human to confirm on the page.
         </p>
       </Card>
+      )}
 
       <p className="text-xs">
         <Link href="/" className="text-fg-subtle transition-colors hover:text-brand">
@@ -327,6 +345,26 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <dd className="tabular mt-0.5 text-sm font-medium text-fg">{value}</dd>
     </div>
   );
+}
+
+function humanizeError(raw: string): { title: string; detail: string } {
+  const msg = raw.replace(/^Error:\s*/, '').trim();
+  if (/not supported with the .+ model|Unsupported value/i.test(msg)) {
+    return { title: 'Couldn’t generate tools', detail: 'The model rejected a generation setting. Retry — this is fixed.' };
+  }
+  if (/OPENAI_API_KEY/i.test(msg)) {
+    return { title: 'Missing OpenAI API key', detail: 'Add OPENAI_API_KEY on the host, then retry.' };
+  }
+  if (/Analyzer unreachable/i.test(msg)) {
+    return { title: 'Analyzer is down', detail: msg };
+  }
+  if (/tool generation failed/i.test(msg)) {
+    return { title: 'Tool generation failed', detail: msg };
+  }
+  if (/no tools generated/i.test(msg)) {
+    return { title: 'No tools generated', detail: 'The model didn’t produce any usable tools for this site. Retry, or try a different URL.' };
+  }
+  return { title: 'Something went wrong', detail: msg };
 }
 
 function Step({ n }: { n: number }) {

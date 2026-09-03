@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import type { PageModel } from '../capability';
 import type { CapabilityModel } from '../capability';
 import type { ToolDef } from '../manifest';
-import { repairModel } from './generate';
+import { FAST_GEN, repairModel } from './generate';
 import { postprocessTool } from './postprocess';
 import { DSL_CHEATSHEET, REPAIR_SYSTEM_PROMPT } from './prompts';
 import { OneToolZ } from './schema';
@@ -22,7 +22,7 @@ export async function repairTool(input: RepairInput): Promise<ToolDef> {
     schemaName: 'webmcp_tool_repair',
     system: REPAIR_SYSTEM_PROMPT,
     maxOutputTokens: 2200,
-    providerOptions: { openai: { reasoningEffort: 'minimal', textVerbosity: 'low', strictJsonSchema: false } },
+    providerOptions: FAST_GEN,
     prompt: [
       'FAILED TOOL (storage shape):',
       JSON.stringify(input.tool),

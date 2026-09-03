@@ -9,6 +9,10 @@ import { GenerationZ, OneToolZ, ToolPlanZ } from './schema';
 const DEFAULT_GEN_MODEL = 'gpt-5.6-sol';
 const DEFAULT_REPAIR_MODEL = 'gpt-5.6-terra';
 
+export const FAST_GEN = {
+  openai: { reasoningEffort: 'none' as const, textVerbosity: 'low' as const, strictJsonSchema: false },
+};
+
 function modelId(value: string | undefined, fallback: string): string {
   const id = (value ?? '').trim() || fallback;
   return id.startsWith('openai/') ? id.slice('openai/'.length) : id;
@@ -77,7 +81,7 @@ export async function planTools(model: CapabilityModel): Promise<ToolPlan> {
     system: SYSTEM_PROMPT,
     prompt: buildPlanPrompt(JSON.stringify(fitted), looksLikeCommerce(fitted)),
     maxOutputTokens: 800,
-    providerOptions: { openai: { reasoningEffort: 'minimal', textVerbosity: 'low', strictJsonSchema: false } },
+    providerOptions: FAST_GEN,
   });
   const seen = new Set<string>();
   const tools: PlannedTool[] = [];
@@ -106,7 +110,7 @@ export async function generateOneTool(
     system: SYSTEM_PROMPT,
     prompt: buildOneToolPrompt(JSON.stringify(fitted), planned, existingNames),
     maxOutputTokens: 2200,
-    providerOptions: { openai: { reasoningEffort: 'minimal', textVerbosity: 'low', strictJsonSchema: false } },
+    providerOptions: FAST_GEN,
   });
   const r = postprocessTool({ ...object, name: planned.name, risk: planned.risk }, model, 'generated');
   return { tool: r.tool, warnings: r.warnings, unknownLocators: r.unknownLocators, modelId: llm.modelId };
@@ -129,7 +133,7 @@ export async function generateTools(model: CapabilityModel): Promise<GenerationO
         schemaName: 'webmcp_tool_generation',
         system: SYSTEM_PROMPT,
         prompt: attempt === 0 ? prompt : `${prompt}\n\nYour previous output was rejected: ${lastError.slice(0, 800)}\nFix it and output the full result again.`,
-        providerOptions: { openai: { reasoningEffort: 'minimal', textVerbosity: 'low', strictJsonSchema: false } },
+        providerOptions: FAST_GEN,
       });
       const warnings: string[] = [];
       const unknownLocators: Record<string, string[]> = {};
