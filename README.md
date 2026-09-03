@@ -6,45 +6,37 @@ The site still looks the same. Agents get real tools they can call — search, a
 
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com).
 
-## Try this (not a random URL)
+## Try it
+
+Turn on `chrome://flags/#enable-webmcp-testing` in Chrome 149+ and relaunch.
 
 **Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/
 
-**Dashboard:** https://webmcpify.netlify.app/sites/demo
+DevTools → Application → WebMCP. 8 tools. Run `search_products` with `{ "query": "black" }`. Or click the **Agent-ready** badge: *find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart*.
+
+No flag: click the badge, or `window.__webmcpify.call('search_products', { query: 'black' })`.
+
+**Paste any public URL:** https://webmcpify.netlify.app
 
 **Original shop (no tools):** https://stride-legacy.netlify.app/
 
-That’s a fake sneaker store I made. It has no WebMCP of its own. WebMCPify adds eight tools:
+The shop never had WebMCP. WebMCPify adds:
 
 `search_products` · `filter_products` · `get_product` · `compare_products` · `add_to_cart` · `get_cart` · `proceed_to_checkout` · `place_order`
 
 `place_order` asks a human to click Confirm on the page before it submits.
 
-### Chrome 149+ (this is the reliable path)
-
-1. Turn on `chrome://flags/#enable-webmcp-testing` and relaunch.
-2. Open the agent-ready URL above.
-3. DevTools → Application → WebMCP. You should see 8 tools.
-4. Run `search_products` with `{ "query": "black" }`. The shop filters and you get JSON back.
-5. Or click the **Agent-ready** badge on the page and chat: *find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart*.
-
-Any browser, no flag: click the badge, or in the console:
-
-```js
-window.__webmcpify.call('search_products', { query: 'black' })
-```
-
-### ChatGPT desktop
-
-If site tools are on for your account: open the same agent-ready URL in the in-app browser. Use the same prompt.
+ChatGPT desktop: same agent-ready URL in the in-app browser if site tools are on.
 
 ### If you own the site
 
+Each site gets its own script. After you paste a URL, the dashboard copies it:
+
 ```html
-<script src="https://webmcpify.netlify.app/w/demo.js"></script>
+<script src="https://webmcpify.netlify.app/w/<siteId>.js"></script>
 ```
 
-Same tools, no proxy. Origin has to match.
+Drop that tag on the matching origin. Same tools, no proxy.
 
 ## How it works
 
@@ -62,7 +54,7 @@ If a tool would pay, order, delete, or send something, we mark it sensitive and 
 
 ## Built with
 
-| Piece | What I used it for |
+| Tech | What I used it for |
 |---|---|
 | OpenAI GPT-5.6 | Generating tools (`gpt-5.6-sol`) and fixing ones that fail (`gpt-5.6-terra`) |
 | Next.js 16 on Netlify | Dashboard and API |
@@ -71,15 +63,11 @@ If a tool would pay, order, delete, or send something, we mark it sensitive and 
 | Netlify | Dashboard + the demo store (two sites, one repo) |
 | Chrome WebMCP | `document.modelContext.registerTool`, DevTools, and `use-webmcp-tool` on the dashboard |
 
-Tool names match Shopify where it made sense (`get_product`, `get_cart`, `proceed_to_checkout`), so agents that already know those still work.
+## Limits
 
-Thanks to [MCP-B](https://mcp-b.ai) / Alex Nahas for the earlier WebMCP work.
+Logins, captchas, sites that block bots, and WebSockets are out of scope. Public pages.
 
-## What doesn’t work
-
-Logins, captchas, sites that block bots, WebSockets, a lot of SPAs. Random public pages are best-effort. The sneaker demo is what you should judge.
-
-## Local dev
+## How to run this
 
 ```bash
 cp .env.example .env.local   # optional; file-store is used if Upstash is unset
@@ -90,10 +78,6 @@ npm run dev:demo             # Stride store :8080
 npm run dev:worker           # Cloudflare Worker proxy :8787
 npm run dev:analyzer         # Playwright analyzer :10000 (needs `cd analyzer && npm install && npx playwright install chromium`)
 ```
-
-Dashboard: http://localhost:3000 — paste `http://localhost:8080` or open `/sites/demo`.
-
-Agent-ready (proxy): http://localhost:8787/s/demo/
 
 ## Repo layout
 
@@ -106,28 +90,3 @@ analyzer/     Playwright crawl + verify (Fastify)
 demo-site/    Stride Legacy Store (static; second Netlify site)
 netlify.toml  Dashboard Netlify build (repo root)
 ```
-
-## Deploy (all from GitHub)
-
-Push `main`, then connect **this repo** in each dashboard:
-
-1. **Netlify site A — dashboard**  
-   Import GitHub repo · base directory = repo root · uses root `netlify.toml`.  
-   Env: `OPENAI_API_KEY`, `GEN_MODEL`, `REPAIR_MODEL`, `UPSTASH_REDIS_REST_URL/TOKEN`, `ANALYZER_URL`, `ANALYZER_TOKEN`, `WORKER_ORIGIN`, `NEXT_PUBLIC_APP_ORIGIN`, `DEMO_STORE_ORIGIN`.  
-   Target hostname: `https://webmcpify.netlify.app` (or whatever Netlify assigns — then patch `worker/wrangler.toml` `API_BASE` / `DASHBOARD_URL` and `demo-site/index.html` snippet).
-
-2. **Netlify site B — Stride store**  
-   Import the **same** repo · base directory = `demo-site` · publish `.` · `demo-site/netlify.toml`.  
-   Prefer `https://stride-legacy.netlify.app`.
-
-3. **Cloudflare Worker**  
-   Workers → Create → Connect Git → this repo, root `worker/`. Production vars: `API_BASE` + `DASHBOARD_URL` = the dashboard Netlify URL.
-
-4. **Render analyzer**  
-   New → Blueprint → this repo → `render.yaml`. Set `BRIDGE_URL=https://<dashboard>/bridge.js` and `ANALYZER_TOKEN` (same as Netlify).
-
-Every push to `main` redeploys. After Devpost submit: freeze the repo.
-
-## License
-
-MIT

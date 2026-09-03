@@ -108,25 +108,21 @@ export function estimateTokens(value: unknown): number {
 
 const REGION_PRIORITY: PageRegion[] = ['home', 'listing', 'detail', 'cart', 'checkout', 'form', 'other'];
 
-export function fitBudget(model: CapabilityModel, maxTokens = 25_000): CapabilityModel {
+export function fitBudget(model: CapabilityModel, maxTokens = 6_000): CapabilityModel {
   const m: CapabilityModel = JSON.parse(JSON.stringify(model));
   const over = () => estimateTokens(m) > maxTokens;
-  if (!over()) return m;
 
-  for (const p of m.pages) p.controls = p.controls.filter((c) => c.region !== 'footer');
-  if (!over()) return m;
-
-  for (const p of m.pages) p.textExcerpt = p.textExcerpt.slice(0, 150);
-  if (!over()) return m;
-
-  for (const p of m.pages) for (const l of p.lists) l.sampleItems = l.sampleItems.slice(0, 1);
-  if (!over()) return m;
-
+  for (const p of m.pages) {
+    p.controls = p.controls.filter((c) => c.region !== 'footer').slice(0, 20);
+    p.headings = p.headings.slice(0, 8);
+    p.textExcerpt = p.textExcerpt.slice(0, 180);
+    p.probes = p.probes.slice(0, 2);
+    p.forms = p.forms.slice(0, 6).map((f) => ({ ...f, fields: f.fields.slice(0, 8) }));
+    p.lists = p.lists.slice(0, 4).map((l) => ({ ...l, sampleItems: l.sampleItems.slice(0, 2) }));
+  }
   for (const e of m.endpoints) e.responseShape = e.responseShape.slice(0, 300);
-  if (!over()) return m;
-
   m.pages.sort((a, b) => REGION_PRIORITY.indexOf(a.region) - REGION_PRIORITY.indexOf(b.region));
-  while (m.pages.length > 4 && over()) m.pages.pop();
+  while (m.pages.length > 3 && over()) m.pages.pop();
   while (over() && m.pages.length > 1) m.pages.pop();
   return m;
 }

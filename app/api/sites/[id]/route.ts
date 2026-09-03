@@ -35,7 +35,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
   const body = (await request.json().catch(() => ({}))) as PatchBody;
 
   if (body.retry && doc.status === 'error') {
-    doc.status = doc.capability ? (doc.manifest ? 'ready' : 'generating') : 'analyzing';
+    if (doc.generation?.queue?.length) doc.status = 'generating';
+    else if (doc.capability && !doc.manifest?.tools.length) doc.status = 'generating';
+    else if (doc.manifest?.tools.length) doc.status = 'ready';
+    else doc.status = 'analyzing';
     doc.error = undefined;
     if (doc.status === 'analyzing' && !doc.analyzerJobId) {
       const { createSiteDoc } = await import('@/lib/pipeline');

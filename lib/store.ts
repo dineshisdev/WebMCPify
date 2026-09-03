@@ -2,7 +2,7 @@ import { Redis } from '@upstash/redis';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { CapabilityModel } from './capability';
-import type { SiteManifest } from './manifest';
+import type { Risk, SiteManifest } from './manifest';
 import demoManifest from './demo-manifest.json';
 
 export type SiteStatus = 'analyzing' | 'generating' | 'verifying' | 'ready' | 'error';
@@ -22,6 +22,11 @@ export interface SiteDoc {
   manifest?: SiteManifest;
   repairAttempted?: string[];
   demo?: boolean;
+  generation?: {
+    queue: { name: string; description: string; risk: Risk }[];
+    modelId: string;
+    attempts?: Record<string, number>;
+  };
 }
 
 export const DEMO_SITE_ID = 'demo';
@@ -51,6 +56,8 @@ interface Backend {
   get(id: string): Promise<SiteDoc | null>;
   set(doc: SiteDoc): Promise<void>;
   list(): Promise<string[]>;
+  tryLock(key: string, ttlSec: number): Promise<boolean>;
+  unlock(key: string): Promise<void>;
 }
 
 class RedisBackend implements Backend {
@@ -68,7 +75,16 @@ class RedisBackend implements Backend {
   async list() {
     return (await this.r.smembers('sites:index')) as string[];
   }
+  async tryLock(key: string, ttlSec: number) {
+    const ok = await this.r.set(`lock:${key}`, '1', { nx: true, ex: ttlSec });
+    return ok === 'OK';
+  }
+  async unlock(key: string) {
+    await this.r.del(`lock:${key}`);
+  }
 }
+
+const memoryLocks = new Map<string, number>();
 
 class FileBackend implements Backend {
   private dir = path.join(process.cwd(), '.data', 'sites');
@@ -92,6 +108,15 @@ class FileBackend implements Backend {
     } catch {
       return [];
     }
+  }
+  async tryLock(key: string, ttlSec: number) {
+    const until = memoryLocks.get(key) ?? 0;
+    if (until > Date.now()) return false;
+    memoryLocks.set(key, Date.now() + ttlSec * 1000);
+    return true;
+  }
+  async unlock(key: string) {
+    memoryLocks.delete(key);
   }
 }
 
@@ -119,6 +144,14 @@ export async function saveSite(doc: SiteDoc): Promise<SiteDoc> {
   doc.updatedAt = new Date().toISOString();
   await getBackend().set(doc);
   return doc;
+}
+
+export async function tryLock(key: string, ttlSec = 40): Promise<boolean> {
+  return getBackend().tryLock(key, ttlSec);
+}
+
+export async function unlock(key: string): Promise<void> {
+  await getBackend().unlock(key);
 }
 
 export async function listSiteIds(): Promise<string[]> {

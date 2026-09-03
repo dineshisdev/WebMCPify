@@ -5,7 +5,7 @@ import type { ToolDef } from '../manifest';
 import { repairModel } from './generate';
 import { postprocessTool } from './postprocess';
 import { DSL_CHEATSHEET, REPAIR_SYSTEM_PROMPT } from './prompts';
-import { GeneratedToolZ } from './schema';
+import { OneToolZ } from './schema';
 
 export interface RepairInput {
   tool: ToolDef;
@@ -18,9 +18,11 @@ export interface RepairInput {
 export async function repairTool(input: RepairInput): Promise<ToolDef> {
   const { object } = await generateObject({
     model: repairModel(),
-    schema: GeneratedToolZ,
+    schema: OneToolZ,
     schemaName: 'webmcp_tool_repair',
     system: REPAIR_SYSTEM_PROMPT,
+    maxOutputTokens: 2200,
+    providerOptions: { openai: { reasoningEffort: 'minimal', textVerbosity: 'low', strictJsonSchema: false } },
     prompt: [
       'FAILED TOOL (storage shape):',
       JSON.stringify(input.tool),

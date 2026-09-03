@@ -1,9 +1,10 @@
 import { analyzer, type VerifyResult } from './analyzer-client';
 import type { CapabilityModel } from './capability';
-import type { SiteManifest, ToolDef } from './manifest';
-import { generateTools } from './llm/generate';
+import type { ToolDef } from './manifest';
+import { generateOneTool, planTools } from './llm/generate';
+import { finalizeTools } from './llm/postprocess';
 import { repairTool } from './llm/repair';
-import { demoSiteDoc, pushProgress, saveSite, type SiteDoc } from './store';
+import { demoSiteDoc, getSite, pushProgress, saveSite, tryLock, unlock, type SiteDoc } from './store';
 
 const VERIFY_ENABLED = () => process.env.SKIP_VERIFY !== '1';
 
@@ -59,22 +60,29 @@ export async function createSiteDoc(id: string, url: string): Promise<SiteDoc> {
 }
 
 export async function advance(doc: SiteDoc): Promise<SiteDoc> {
+  const ttl = doc.status === 'generating' ? 50 : 25;
+  const got = await tryLock(`advance:${doc.id}`, ttl);
+  if (!got) return doc;
   try {
-    switch (doc.status) {
+    const fresh = (await getSite(doc.id)) ?? doc;
+    switch (fresh.status) {
       case 'analyzing':
-        return await stepAnalyzing(doc);
+        return await stepAnalyzing(fresh);
       case 'generating':
-        return await stepGenerating(doc);
+        return await stepGenerating(fresh);
       case 'verifying':
-        return await stepVerifying(doc);
+        return await stepVerifying(fresh);
       default:
-        return doc;
+        return fresh;
     }
   } catch (e) {
-    doc.status = 'error';
-    doc.error = (e as Error).message;
-    pushProgress(doc, `Error: ${doc.error}`);
-    return saveSite(doc);
+    const current = (await getSite(doc.id)) ?? doc;
+    current.status = 'error';
+    current.error = (e as Error).message;
+    pushProgress(current, `Error: ${current.error}`);
+    return saveSite(current);
+  } finally {
+    await unlock(`advance:${doc.id}`);
   }
 }
 
@@ -97,27 +105,65 @@ async function stepAnalyzing(doc: SiteDoc): Promise<SiteDoc> {
 
 async function stepGenerating(doc: SiteDoc): Promise<SiteDoc> {
   if (!doc.capability) throw new Error('no capability model');
-  const out = await generateTools(doc.capability);
-  const proxyChoice = proxyDecision(doc.capability);
-  const manifest: SiteManifest = {
-    version: 1,
-    siteId: doc.id,
-    origin: doc.origin,
-    name: out.siteName || doc.capability.siteTitle || doc.origin,
-    category: out.category,
-    spa: doc.capability.spa,
-    generatedAt: new Date().toISOString(),
-    proxy: proxyChoice,
-    settings: { badge: true, outputBudget: 1500, confirmTimeoutMs: 60_000 },
-    tools: out.tools,
-  };
-  if (!proxyChoice.allowed) pushProgress(doc, `Instant proxy disabled: ${proxyChoice.reason}`);
-  doc.manifest = manifest;
-  pushProgress(doc, `Generated ${out.tools.length} tools with ${out.modelId}`);
-  for (const w of out.warnings.slice(0, 6)) pushProgress(doc, `note: ${w}`);
-  const unknown = Object.entries(out.unknownLocators);
-  if (unknown.length) pushProgress(doc, `Locators not found in the model for: ${unknown.map(([n]) => n).join(', ')} (will be verified)`);
-  return startVerification(doc, out.tools.map((t) => t.name));
+
+  if (!doc.generation) {
+    const plan = await planTools(doc.capability);
+    const proxyChoice = proxyDecision(doc.capability);
+    doc.manifest = {
+      version: 1,
+      siteId: doc.id,
+      origin: doc.origin,
+      name: plan.siteName || doc.capability.siteTitle || doc.origin,
+      category: plan.category,
+      spa: doc.capability.spa,
+      generatedAt: new Date().toISOString(),
+      proxy: proxyChoice,
+      settings: { badge: true, outputBudget: 1500, confirmTimeoutMs: 60_000 },
+      tools: [],
+    };
+    if (!proxyChoice.allowed) pushProgress(doc, `Instant proxy disabled: ${proxyChoice.reason}`);
+    doc.generation = { queue: plan.tools, modelId: plan.modelId, attempts: {} };
+    pushProgress(doc, `Planned ${plan.tools.length} tools with ${plan.modelId}: ${plan.tools.map((t) => t.name).join(', ')}`);
+    return saveSite(doc);
+  }
+
+  const next = doc.generation.queue[0];
+  if (!next) {
+    const names = doc.manifest?.tools.map((t) => t.name) ?? [];
+    delete doc.generation;
+    if (!names.length) throw new Error('no tools generated');
+    return startVerification(doc, names);
+  }
+
+  try {
+    const existing = doc.manifest?.tools.map((t) => t.name) ?? [];
+    const out = await generateOneTool(doc.capability, next, existing);
+    const tools = finalizeTools([...(doc.manifest?.tools ?? []), out.tool]);
+    doc.manifest = { ...doc.manifest!, tools, generatedAt: new Date().toISOString() };
+    doc.generation.queue = doc.generation.queue.slice(1);
+    pushProgress(doc, `Generated ${out.tool.name} (${tools.length}/${tools.length + doc.generation.queue.length})`);
+    for (const w of out.warnings.slice(0, 3)) pushProgress(doc, `note: ${out.tool.name}: ${w}`);
+    if (out.unknownLocators.length) pushProgress(doc, `${out.tool.name}: locators not in the model (will be verified)`);
+  } catch (e) {
+    const attempts = doc.generation.attempts ?? {};
+    attempts[next.name] = (attempts[next.name] ?? 0) + 1;
+    doc.generation.attempts = attempts;
+    if (attempts[next.name]! >= 2) {
+      doc.generation.queue = doc.generation.queue.slice(1);
+      pushProgress(doc, `Skipped ${next.name}: ${(e as Error).message}`.slice(0, 220));
+    } else {
+      pushProgress(doc, `Will retry ${next.name} on the next poll`);
+    }
+    return saveSite(doc);
+  }
+
+  if (!doc.generation.queue.length) {
+    const names = doc.manifest!.tools.map((t) => t.name);
+    delete doc.generation;
+    if (!names.length) throw new Error('no tools generated');
+    return startVerification(doc, names);
+  }
+  return saveSite(doc);
 }
 
 async function startVerification(doc: SiteDoc, tools: string[]): Promise<SiteDoc> {
@@ -166,26 +212,32 @@ async function stepVerifying(doc: SiteDoc): Promise<SiteDoc> {
   }
   const passed = job.result.results.filter((r) => r.status === 'passed').length;
   const skipped = job.result.results.filter((r) => r.status === 'skipped').length;
-  pushProgress(doc, `Verification: ${passed} passed · ${failed.length} failed · ${skipped} skipped (sensitive, dry-run)`);
+  const summary = `Verification: ${passed} passed · ${failed.length} failed · ${skipped} skipped (sensitive, dry-run)`;
+  if (!doc.progress.some((p) => p.endsWith(summary))) pushProgress(doc, summary);
 
   const attempted = new Set(doc.repairAttempted ?? []);
-  const toRepair = failed.filter((f) => !attempted.has(f.tool.name)).slice(0, 4);
-  if (toRepair.length && doc.capability) {
-    pushProgress(doc, `Repairing ${toRepair.length} tool(s) with the LLM…`);
-    const repairedNames: string[] = [];
-    for (const f of toRepair) {
-      attempted.add(f.tool.name);
-      try {
-        const fixed = await repairTool({ tool: f.tool, error: f.error, failedStep: f.failedStep, pageModelAtFailure: f.page, model: doc.capability });
-        const idx = doc.manifest.tools.findIndex((t) => t.name === f.tool.name);
-        doc.manifest.tools[idx] = { ...fixed, verification: { status: 'unverified' } };
-        repairedNames.push(fixed.name);
-      } catch (e) {
-        pushProgress(doc, `Repair of ${f.tool.name} failed: ${(e as Error).message}`);
-      }
-    }
+  const remaining = doc.manifest.tools.filter((t) => t.verification.status === 'failed' && !attempted.has(t.name));
+  const next = remaining[0];
+  if (next && doc.capability) {
+    const f = failed.find((x) => x.tool.name === next.name);
+    attempted.add(next.name);
     doc.repairAttempted = [...attempted];
-    if (repairedNames.length) return startVerification(doc, repairedNames);
+    pushProgress(doc, `Repairing ${next.name} with the LLM…`);
+    try {
+      const fixed = await repairTool({
+        tool: next,
+        error: f?.error ?? next.verification.error ?? 'unknown error',
+        failedStep: f?.failedStep ?? next.verification.failedStep,
+        pageModelAtFailure: f?.page,
+        model: doc.capability,
+      });
+      const idx = doc.manifest.tools.findIndex((t) => t.name === next.name);
+      doc.manifest.tools[idx] = { ...fixed, verification: { status: 'unverified' } };
+      return startVerification(doc, [fixed.name]);
+    } catch (e) {
+      pushProgress(doc, `Repair of ${next.name} failed: ${(e as Error).message}`);
+      return saveSite(doc);
+    }
   }
 
   for (const t of doc.manifest.tools) if (t.verification.status === 'failed') t.enabled = false;

@@ -47,4 +47,32 @@ export function buildGenerationPrompt(modelJson: string, isCommerce: boolean): s
   ].join('\n');
 }
 
+export function buildPlanPrompt(modelJson: string, isCommerce: boolean): string {
+  return [
+    'CAPABILITY MODEL (JSON):',
+    modelJson,
+    '',
+    isCommerce ? COMMERCE_VOCAB : '',
+    '',
+    'List 3–5 tools this site should expose. Names, descriptions, and risk only — no recipes. Prefer fewer, non-overlapping verb_noun names. Read tools first.',
+  ].join('\n');
+}
+
+export function buildOneToolPrompt(
+  modelJson: string,
+  planned: { name: string; description: string; risk: string },
+  existingNames: string[],
+): string {
+  return [
+    'CAPABILITY MODEL (JSON):',
+    modelJson,
+    '',
+    DSL_CHEATSHEET,
+    '',
+    `Design ONLY this tool: ${JSON.stringify(planned)}`,
+    existingNames.length ? `Already generated (do not duplicate): ${existingNames.join(', ')}` : '',
+    'Copy every CSS selector verbatim from the model. Keep the recipe ≤8 steps. Output the generation shape for this one tool (params[], fields[], valueJson, samplesJson).',
+  ].join('\n');
+}
+
 export const REPAIR_SYSTEM_PROMPT = `You fix ONE WebMCP tool recipe that failed when executed against the live website. Change as little as possible: usually a selector, a wait, a value mapping, or an added precondition. Only use selectors that appear in the provided page model. Keep the same tool name and risk. Follow the same budgets and rules as before.`;

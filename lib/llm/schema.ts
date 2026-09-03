@@ -116,6 +116,22 @@ export const GenerationZ = z.object({
   tools: z.array(GeneratedToolZ).min(1).max(8),
 });
 
+export const ToolPlanZ = z.object({
+  siteName: z.string().max(60),
+  category: z.enum(['commerce', 'booking', 'content', 'saas', 'other']),
+  tools: z.array(
+    z.object({
+      name: z.string().max(40),
+      description: z.string().max(600),
+      risk: z.enum(['read', 'reversible', 'sensitive']),
+    }),
+  ).min(1).max(5),
+});
+
+export const OneToolZ = GeneratedToolZ.extend({
+  recipe: z.array(StepZ).min(1).max(8),
+});
+
 export type GeneratedTool = z.infer<typeof GeneratedToolZ>;
 export type Generation = z.infer<typeof GenerationZ>;
 export type GeneratedStep = z.infer<typeof StepZ>;

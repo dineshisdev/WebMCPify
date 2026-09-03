@@ -65,7 +65,7 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
 
   useEffect(() => {
     if (!doc || !['analyzing', 'generating', 'verifying'].includes(doc.status)) return;
-    const t = setTimeout(refresh, 2500);
+    const t = setTimeout(refresh, doc.status === 'generating' ? 5000 : 2500);
     return () => clearTimeout(t);
   }, [doc, refresh]);
 
