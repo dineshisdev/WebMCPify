@@ -1,5 +1,5 @@
 import type { ToolDef } from '../../lib/manifest';
-import { planTurn, rememberFromOutput, resolveInput, type Plan, type PlanMemory } from './plan';
+import { planTurn, rememberFromOutput, resolveInput, suggestion, type Plan, type PlanMemory } from './plan';
 
 export interface Ui {
   setBusy(on: boolean, label?: string): void;
@@ -104,7 +104,7 @@ export function mountUi(opts: {
         <div class="chat" data-pane="chat">
           <div class="msgs"></div>
           <form class="composer">
-            <input name="q" placeholder="find black sneakers under ₹10k" autocomplete="off">
+            <input name="q" placeholder="what should the agent do?" autocomplete="off">
             <button class="go" type="submit">Go</button>
           </form>
         </div>
@@ -154,7 +154,7 @@ export function mountUi(opts: {
       (shadow.querySelector('[data-pane="tools"]') as HTMLElement).style.display = tab === 'tools' ? 'block' : 'none';
       (shadow.querySelector('[data-pane="chat"]') as HTMLElement).classList.toggle('on', tab === 'chat');
       if (tab === 'chat' && msgs.childElementCount === 0) {
-        addBubble('bot', 'Try: “find black sneakers under ₹10k”, then “compare the top 3”, then “add the cheapest to cart”.');
+        addBubble('bot', suggestion(tools));
       }
     });
   });
@@ -281,7 +281,7 @@ export function mountUi(opts: {
         (shadow.querySelector('[data-pane="tools"]') as HTMLElement).style.display = tab === 'tools' ? 'block' : 'none';
         (shadow.querySelector('[data-pane="chat"]') as HTMLElement).classList.toggle('on', tab === 'chat');
         if (tab === 'chat' && msgs.childElementCount === 0) {
-          addBubble('bot', 'Try: “find black sneakers under ₹10k”, then “compare the top 3”, then “add the cheapest to cart”.');
+          addBubble('bot', suggestion(tools));
         }
       }
     },

@@ -8,23 +8,7 @@ Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com).
 
 ## Try it
 
-Turn on `chrome://flags/#enable-webmcp-testing` in Chrome 149+ and relaunch.
-
-**Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/
-
-DevTools → Application → WebMCP. 8 tools. Run `search_products` with `{ "query": "black" }`. Or click the **Agent-ready** badge: *find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart*.
-
-No flag: click the badge, or `window.__webmcpify.call('search_products', { query: 'black' })`.
-
 **Paste any public URL:** https://webmcpify.netlify.app
-
-**Original shop (no tools):** https://stride-legacy.netlify.app/
-
-The shop never had WebMCP. WebMCPify adds:
-
-`search_products` · `filter_products` · `get_product` · `compare_products` · `add_to_cart` · `get_cart` · `proceed_to_checkout` · `place_order`
-
-`place_order` asks a human to click Confirm on the page before it submits.
 
 ChatGPT desktop: same agent-ready URL in the in-app browser if site tools are on.
 
@@ -37,6 +21,24 @@ Each site gets its own script. After you paste a URL, the dashboard copies it:
 ```
 
 Drop that tag on the matching origin. Same tools, no proxy.
+
+### Example
+
+**Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/
+
+**Original shop (no tools):** https://stride-legacy.netlify.app/
+
+The shop never had WebMCP. WebMCPify adds:
+
+`search_products` · `filter_products` · `get_product` · `compare_products` · `add_to_cart` · `get_cart` · `proceed_to_checkout` · `place_order`
+
+If you haven't already, turn on `chrome://flags/#enable-webmcp-testing` in Chrome 149+ and relaunch.
+
+DevTools → Application → WebMCP. 8 tools. Run `search_products` with `{ "query": "black" }`. Or click the **Agent-ready** badge: *find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart*.
+
+No flag: click the badge, or `window.__webmcpify.call('search_products', { query: 'black' })`.
+
+`place_order` asks a human to click Confirm on the page before it submits.
 
 ## How it works
 

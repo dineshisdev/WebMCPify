@@ -40,9 +40,28 @@ function searchQuery(goal: string, g: string, cat: string | undefined): string {
   return q;
 }
 
+export function suggestion(tools: ToolDef[]): string {
+  const usable = tools.filter((t) => t.enabled);
+  if (!usable.length) return 'No tools are enabled on this page.';
+  const names = usable.slice(0, 3).map((t) => t.name);
+  return `Try: ${names.map((n) => `“${n}”`).join(', ')}. Name a tool, or describe what you want.`;
+}
+
+function byName(goal: string, tools: ToolDef[]): ToolDef | null {
+  const g = goal.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  let best: ToolDef | null = null;
+  for (const t of tools) {
+    if (!t.enabled) continue;
+    const n = t.name.toLowerCase();
+    if (g === n) return t;
+    if (g.includes(n) || n.includes(g.replace(/^_+|_+$/g, ''))) best = best ?? t;
+  }
+  return best;
+}
+
 export function planTurn(goal: string, tools: ToolDef[], memory: PlanMemory): Plan {
   const g = goal.toLowerCase().trim();
-  if (!g) return { say: 'Tell me what to do — e.g. “find black sneakers under ₹10k”.' };
+  if (!g) return { say: suggestion(tools) };
   const size = SIZE_RE.exec(g)?.[1];
   const priceMatch = PRICE_RE.exec(g);
   const maxPrice = priceMatch ? Number(priceMatch[1].replace(/,/g, '')) * (priceMatch[2] ? 1000 : 1) : undefined;
@@ -114,9 +133,9 @@ export function planTurn(goal: string, tools: ToolDef[], memory: PlanMemory): Pl
     const q = searchQuery(goal, g, cat);
     return one('search_products', { query: q }, `Searching “${q}”`);
   }
-  const first = tools.find((t) => t.enabled);
-  if (!first) return { say: 'No tools are enabled on this page.' };
-  return one(first.name, (first.samples[0] ?? {}) as Record<string, unknown>, `Running ${first.name}`);
+  const named = byName(goal, tools);
+  if (named) return one(named.name, (named.samples[0] ?? {}) as Record<string, unknown>, `Running ${named.name}`);
+  return { say: `I couldn't map that to a tool. ${suggestion(tools)}` };
 }
 
 export function rememberFromOutput(text: string, memory: PlanMemory): void {
