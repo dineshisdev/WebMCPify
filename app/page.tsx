@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AgentTools } from './components/AgentTools';
 import { UrlForm } from './components/UrlForm';
+import { HeroVisual } from './components/HeroVisual';
 import { Card, IconCheck, IconExternal } from './components/ui';
 
 const STEPS = [
@@ -30,7 +31,8 @@ export default function Home() {
     <div className="mx-auto w-full max-w-6xl px-4 py-14">
       <AgentTools />
 
-      <section className="flex flex-col items-start gap-6">
+      <section className="grid min-w-0 items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="flex min-w-0 flex-col items-start gap-6">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-3 py-1 text-xs font-semibold text-brand ring-1 ring-inset ring-brand-border">
           Built for the OpenAI WebMCP Challenge
         </span>
@@ -49,6 +51,10 @@ export default function Home() {
             Stride Legacy Store <IconExternal width={12} height={12} />
           </Link>
         </p>
+        </div>
+        <div className="min-w-0 lg:pl-2">
+          <HeroVisual />
+        </div>
       </section>
 
       <section className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

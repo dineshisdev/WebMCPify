@@ -186,6 +186,46 @@
   }
 }
 
+@layer components {
+  .hv-scanhost { overflow: hidden; }
+
+  .hv-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 40%;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--brand) 18%, transparent), transparent);
+    animation: hv-sweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .hv-tool {
+    animation: hv-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hv-dot {
+    animation: hv-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes hv-sweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  8%   { opacity: 1; }
+  38%  { transform: translateY(260%); opacity: 0; }
+  100% { transform: translateY(260%); opacity: 0; }
+}
+
+@keyframes hv-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes hv-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
