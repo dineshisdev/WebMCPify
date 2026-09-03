@@ -1,20 +1,31 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import Link from 'next/link';
-import './globals.css';
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
+import "./globals.css";
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'], display: 'swap' });
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'], display: 'swap' });
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: 'WebMCPify — give any website an agent interface',
+  title: "WebMCPify — give any website an agent interface",
   description:
-    'Paste a URL. Get a version of that site that agents can use — same UI, real WebMCP tools.',
+    "Paste a URL. Get a version of that site that agents can use — same UI, real WebMCP tools.",
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col">
         <a
           href="#main"
@@ -24,16 +35,34 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         </a>
         <header className="sticky top-0 z-20 border-b bg-bg/85 backdrop-blur-md">
           <nav className="mx-auto flex w-full max-w-6xl items-center gap-5 px-4 py-3 text-sm">
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight text-fg">
-              <span className="grid h-6 w-6 place-items-center rounded-md bg-brand text-brand-fg" aria-hidden>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-semibold tracking-tight text-fg"
+            >
+              <span
+                className="grid h-6 w-6 place-items-center rounded-full bg-brand text-brand-fg"
+                aria-hidden
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="m8 6 6 6-6 6" />
                   <path d="M17 18h2" />
                 </svg>
               </span>
               WebMCPify
             </Link>
-            <Link href="/sites/demo" className="py-1.5 text-fg-muted transition-colors hover:text-fg">
+            <Link
+              href="/sites/demo"
+              className="py-1.5 text-fg-muted transition-colors hover:text-fg"
+            >
               Demo
             </Link>
             <a

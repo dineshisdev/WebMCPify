@@ -1,3 +1,4 @@
+import { jsonSchema, type Schema } from 'ai';
 import { z } from 'zod';
 
 export const LocatorZ = z.object({
@@ -20,73 +21,79 @@ export const WhereZ = z.object({
   value: z.string().max(200),
 });
 
-const STEP_OPS = [
-  'ensurePage',
-  'navigate',
-  'fill',
-  'type',
-  'press',
-  'click',
-  'select',
-  'check',
-  'waitFor',
-  'waitForDomIdle',
-  'waitForUrl',
-  'assert',
-  'extractText',
-  'extractFields',
-  'extractList',
-  'fetchJson',
-  'readStorage',
-  'filterList',
-  'setUrlState',
-  'confirm',
-  'return',
-] as const;
-
-export const StepZ = z.object({
-  op: z.enum(STEP_OPS).describe('Recipe opcode; set unused fields to null'),
-  when: z.string().nullable().describe("Template path such as 'input.size'; step skipped when empty"),
+const base = {
+  when: z.string().nullable().describe("Template path such as 'input.size'; step is skipped when it resolves empty"),
   optional: z.boolean().nullable().describe('Swallow TARGET_NOT_FOUND for this step'),
   errorHint: z.string().max(200).nullable().describe('Actionable hint appended to errors from this step'),
-  urlPattern: z.string().max(200).nullable().describe('ensurePage: regex over the pathname'),
-  path: z.string().max(300).nullable().describe('ensurePage / navigate / setUrlState path'),
-  waitForCss: z.string().max(200).nullable().describe('ensurePage: CSS to wait for after pushState'),
-  target: LocatorZ.nullable().describe('Locator for fill/type/press/click/select/check/waitFor/assert/extractText'),
-  value: z.string().max(300).nullable().describe('fill / type / select value; may contain {{templates}}'),
-  pressEnter: z.boolean().nullable(),
-  key: z.enum(['Enter', 'Escape', 'Tab', 'ArrowDown']).nullable().describe('press key'),
-  checked: z.boolean().nullable(),
-  state: z.enum(['visible', 'hidden', 'attached', 'detached', 'exists', 'notExists']).nullable(),
-  timeoutMs: z.number().int().nullable(),
-  pattern: z.string().max(200).nullable().describe('waitForUrl regex'),
-  message: z.string().max(200).nullable().describe('assert / fail message'),
-  attr: z.string().max(40).nullable(),
-  regex: z.string().max(80).nullable(),
-  type: z.enum(['string', 'number', 'boolean']).nullable(),
-  as: z.string().max(30).nullable().describe('Variable name to store extract/fetch/filter results'),
-  rootCss: z.string().max(200).nullable(),
-  fields: z.array(FieldZ).nullable(),
-  item: z.string().max(200).nullable().describe('extractList: CSS for each item relative to root'),
-  limit: z.number().int().nullable(),
-  url: z.string().max(300).nullable().describe('fetchJson URL'),
-  method: z.enum(['GET', 'POST']).nullable(),
-  bodyJson: z.string().max(1000).nullable(),
-  pick: z.string().max(60).nullable().describe('fetchJson: dotted path into the JSON body'),
-  pickFields: z.array(z.string().max(40)).nullable().describe('filterList: field names to keep'),
-  storageKey: z.string().max(60).nullable().describe('readStorage key'),
-  parseJson: z.boolean().nullable(),
-  from: z.string().max(60).nullable().describe("filterList: template path of a list, e.g. 'vars.catalog'"),
-  where: z.array(WhereZ).nullable(),
-  sortBy: z.string().max(40).nullable(),
-  order: z.enum(['asc', 'desc']).nullable(),
-  paramsJson: z.string().max(500).nullable().describe('setUrlState query params as JSON object string'),
-  title: z.string().max(80).nullable(),
-  details: z.array(z.string().max(120)).nullable(),
-  valueJson: z.string().max(1500).nullable().describe('return: JSON object; strings may contain {{templates}}'),
-  ifEmptyVar: z.string().max(30).nullable(),
-  ifEmptyMessage: z.string().max(200).nullable(),
-});
+};
+
+const step = <S extends string, T extends z.ZodRawShape>(op: S, shape: T) =>
+  z.object({ op: z.literal(op), ...base, ...shape });
+
+export const StepZ = z.discriminatedUnion('op', [
+  step('ensurePage', {
+    urlPattern: z.string().max(200).describe('Regex over the pathname'),
+    path: z.string().max(300),
+    waitForCss: z.string().max(200).nullable().describe('CSS to wait for after pushState'),
+  }),
+  step('navigate', { path: z.string().max(300) }),
+  step('fill', { target: LocatorZ, value: z.string().max(300).describe('May contain {{templates}}') }),
+  step('type', { target: LocatorZ, value: z.string().max(300), pressEnter: z.boolean().nullable() }),
+  step('press', { key: z.enum(['Enter', 'Escape', 'Tab', 'ArrowDown']), target: LocatorZ.nullable() }),
+  step('click', { target: LocatorZ }),
+  step('select', { target: LocatorZ, value: z.string().max(200) }),
+  step('check', { target: LocatorZ, checked: z.boolean() }),
+  step('waitFor', {
+    target: LocatorZ,
+    state: z.enum(['visible', 'hidden', 'attached', 'detached']),
+    timeoutMs: z.number().int().nullable(),
+  }),
+  step('waitForDomIdle', {}),
+  step('waitForUrl', { pattern: z.string().max(200) }),
+  step('assert', { target: LocatorZ, state: z.enum(['exists', 'notExists']), message: z.string().max(200) }),
+  step('extractText', {
+    target: LocatorZ,
+    attr: z.string().max(40).nullable(),
+    regex: z.string().max(80).nullable(),
+    type: z.enum(['string', 'number']).nullable(),
+    as: z.string().max(30),
+  }),
+  step('extractFields', { rootCss: z.string().max(200).nullable(), fields: z.array(FieldZ), as: z.string().max(30) }),
+  step('extractList', {
+    rootCss: z.string().max(200).nullable(),
+    item: z.string().max(200).describe('CSS for each item, relative to root'),
+    fields: z.array(FieldZ),
+    limit: z.number().int().nullable(),
+    as: z.string().max(30),
+  }),
+  step('fetchJson', {
+    url: z.string().max(300),
+    method: z.enum(['GET', 'POST']).nullable(),
+    bodyJson: z.string().max(1000).nullable(),
+    pick: z.string().max(60).nullable().describe('Dotted path into the JSON body'),
+    as: z.string().max(30),
+  }),
+  step('readStorage', { storageKey: z.string().max(60), parseJson: z.boolean().nullable(), as: z.string().max(30) }),
+  step('filterList', {
+    from: z.string().max(60).describe("Template path of a list, e.g. 'vars.catalog'"),
+    where: z.array(WhereZ).nullable(),
+    sortBy: z.string().max(40).nullable(),
+    order: z.enum(['asc', 'desc']).nullable(),
+    limit: z.number().int().nullable(),
+    pickFields: z.array(z.string().max(40)).nullable(),
+    as: z.string().max(30),
+  }),
+  step('setUrlState', {
+    path: z.string().max(300).nullable(),
+    paramsJson: z.string().max(500).nullable().describe('Query params as a JSON object string'),
+  }),
+  step('confirm', { title: z.string().max(80), message: z.string().max(200), details: z.array(z.string().max(120)).nullable() }),
+  step('return', {
+    valueJson: z.string().max(1500).describe('JSON object; strings may contain {{templates}}'),
+    ifEmptyVar: z.string().max(30).nullable(),
+    ifEmptyMessage: z.string().max(200).nullable(),
+  }),
+]);
 
 export const ParamZ = z.object({
   name: z.string().max(30),
@@ -135,3 +142,37 @@ export const OneToolZ = GeneratedToolZ.extend({
 export type GeneratedTool = z.infer<typeof GeneratedToolZ>;
 export type Generation = z.infer<typeof GenerationZ>;
 export type GeneratedStep = z.infer<typeof StepZ>;
+
+const UNSUPPORTED = ['maxLength', 'minLength', 'pattern', 'format', 'minItems', 'maxItems', 'minimum', 'maximum', 'multipleOf', 'default'];
+
+function toStrictNode(node: unknown): void {
+  if (!node || typeof node !== 'object') return;
+  const n = node as Record<string, unknown>;
+  for (const k of UNSUPPORTED) delete n[k];
+  if (n.type === 'object' && n.properties && typeof n.properties === 'object') {
+    const props = n.properties as Record<string, unknown>;
+    n.required = Object.keys(props);
+    n.additionalProperties = false;
+    for (const v of Object.values(props)) toStrictNode(v);
+  }
+  for (const key of ['items', 'anyOf', 'oneOf', 'allOf', 'not']) {
+    const v = n[key];
+    if (Array.isArray(v)) v.forEach(toStrictNode);
+    else if (v) toStrictNode(v);
+  }
+}
+
+export function strictWire<T>(schema: z.ZodType<T>): Schema<T> {
+  const js = z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'output' }) as Record<string, unknown>;
+  toStrictNode(js);
+  return jsonSchema<T>(js as never, {
+    validate: (value) => {
+      const r = schema.safeParse(value);
+      return r.success ? { success: true, value: r.data } : { success: false, error: r.error };
+    },
+  });
+}
+
+export const OneToolWire = strictWire(OneToolZ);
+export const ToolPlanWire = strictWire(ToolPlanZ);
+export const GenerationWire = strictWire(GenerationZ);

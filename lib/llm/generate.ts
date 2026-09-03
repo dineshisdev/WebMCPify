@@ -4,13 +4,13 @@ import { fitBudget, type CapabilityModel } from '../capability';
 import type { Risk, SiteCategory, ToolDef } from '../manifest';
 import { finalizeTools, postprocessTool, sanitizeToolName } from './postprocess';
 import { buildOneToolPrompt, buildPlanPrompt, buildGenerationPrompt, SYSTEM_PROMPT } from './prompts';
-import { GenerationZ, OneToolZ, ToolPlanZ } from './schema';
+import { GenerationWire, OneToolWire, ToolPlanWire } from './schema';
 
-const DEFAULT_GEN_MODEL = 'gpt-5.6-luna';
+const DEFAULT_GEN_MODEL = 'gpt-5.6-terra';
 const DEFAULT_REPAIR_MODEL = 'gpt-5.6-luna';
 
 export const FAST_GEN = {
-  openai: { reasoningEffort: 'none' as const, textVerbosity: 'low' as const, strictJsonSchema: false },
+  openai: { reasoningEffort: 'none' as const, textVerbosity: 'low' as const, strictJsonSchema: true },
 };
 
 function modelId(value: string | undefined, fallback: string): string {
@@ -76,11 +76,11 @@ export async function planTools(model: CapabilityModel): Promise<ToolPlan> {
   const llm = genModel();
   const { object } = await generateObject({
     model: llm,
-    schema: ToolPlanZ,
+    schema: ToolPlanWire,
     schemaName: 'webmcp_tool_plan',
     system: SYSTEM_PROMPT,
     prompt: buildPlanPrompt(JSON.stringify(fitted), looksLikeCommerce(fitted)),
-    maxOutputTokens: 800,
+    maxOutputTokens: 1500,
     providerOptions: FAST_GEN,
   });
   const seen = new Set<string>();
@@ -105,11 +105,11 @@ export async function generateOneTool(
   const llm = genModel();
   const { object } = await generateObject({
     model: llm,
-    schema: OneToolZ,
+    schema: OneToolWire,
     schemaName: 'webmcp_one_tool',
     system: SYSTEM_PROMPT,
     prompt: buildOneToolPrompt(JSON.stringify(fitted), planned, existingNames),
-    maxOutputTokens: 2200,
+    maxOutputTokens: 3000,
     providerOptions: FAST_GEN,
   });
   const r = postprocessTool({ ...object, name: planned.name, risk: planned.risk }, model, 'generated');
@@ -129,7 +129,7 @@ export async function generateTools(model: CapabilityModel): Promise<GenerationO
     try {
       const { object } = await generateObject({
         model: llm,
-        schema: GenerationZ,
+        schema: GenerationWire,
         schemaName: 'webmcp_tool_generation',
         system: SYSTEM_PROMPT,
         prompt: attempt === 0 ? prompt : `${prompt}\n\nYour previous output was rejected: ${lastError.slice(0, 800)}\nFix it and output the full result again.`,

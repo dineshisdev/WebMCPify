@@ -112,7 +112,7 @@ function toStep(g: GeneratedStep, warnings: string[]): Step | null {
     }
     case 'waitFor': {
       const target = loc(g.target);
-      if (!target || !g.state || g.state === 'exists' || g.state === 'notExists') {
+      if (!target || !g.state) {
         return drop(g.op, 'target.css and state visible|hidden|attached|detached required', warnings);
       }
       return { ...base, op: 'waitFor', target, state: g.state, ...(g.timeoutMs ? { timeoutMs: g.timeoutMs } : {}) };
@@ -132,7 +132,7 @@ function toStep(g: GeneratedStep, warnings: string[]): Step | null {
     case 'extractText': {
       const target = loc(g.target);
       if (!target || !g.as) return drop(g.op, 'target.css and as required', warnings);
-      return { ...base, op: 'extractText', target, as: g.as, ...clean({ attr: g.attr ?? undefined, regex: g.regex ?? undefined, type: g.type === 'boolean' ? undefined : (g.type ?? undefined) }) };
+      return { ...base, op: 'extractText', target, as: g.as, ...clean({ attr: g.attr ?? undefined, regex: g.regex ?? undefined, type: g.type ?? undefined }) };
     }
     case 'extractFields':
       if (!g.as || !g.fields?.length) return drop(g.op, 'fields[] and as required', warnings);
