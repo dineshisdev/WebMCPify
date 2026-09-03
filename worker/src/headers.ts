@@ -46,7 +46,7 @@ const RESPONSE_DROP = new Set([
   'reporting-endpoints',
   'nel',
   'alt-svc',
-  'set-cookie', // re-added, rewritten
+  'set-cookie',
 ]);
 
 export interface ResponseHeaderOpts {
@@ -73,7 +73,6 @@ export function cleanResponseHeaders(res: Response, opts: ResponseHeaderOpts): H
   out.set('origin-agent-cluster', '?1');
   out.set('permissions-policy', 'tools=(self)');
   out.set('x-webmcpify', '1');
-  // A proxied copy must never be indexed or archived as if it were the origin.
   out.set('x-robots-tag', 'noindex, nofollow, noarchive');
   return out;
 }

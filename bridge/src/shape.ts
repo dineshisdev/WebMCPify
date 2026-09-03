@@ -19,7 +19,6 @@ function clone<T>(v: T): T {
   return JSON.parse(toJson(v)) as T;
 }
 
-/** Largest array that is still worth shrinking (`minLen` items or more). */
 function largestArray(root: unknown, minLen = 1): { parent: unknown; key: string | number | null; arr: unknown[] } | null {
   let best: { parent: unknown; key: string | number | null; arr: unknown[]; size: number } | null = null;
   const visit = (v: unknown, parent: unknown, key: string | number | null) => {
@@ -54,8 +53,6 @@ export function shapeResult(value: unknown, budget: number): ToolResult {
 
   let work: unknown = clone(value);
 
-  // Halve the largest array repeatedly, never below one item, re-picking the
-  // largest each pass so nested arrays shrink too.
   for (let guard = 0; guard < 40; guard++) {
     json = toJson(work);
     if (json.length <= budget) return text(json);
@@ -79,8 +76,6 @@ export function shapeResult(value: unknown, budget: number): ToolResult {
   json = toJson(work);
   if (json.length <= budget) return text(json);
 
-  // Still too large: drop whole keys, biggest first, so the result stays valid
-  // JSON instead of being sliced mid-token.
   if (work && typeof work === 'object' && !Array.isArray(work)) {
     const rec = work as Record<string, unknown>;
     const keys = Object.keys(rec)

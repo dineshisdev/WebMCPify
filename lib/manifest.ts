@@ -121,11 +121,6 @@ export interface SiteManifest {
   category: SiteCategory;
   spa: boolean;
   generatedAt: string;
-  /**
-   * Instant-proxy hosting re-serves the origin under the Worker's domain with its
-   * CSP/XFO stripped. Sites with a sign-in form are refused so the proxy cannot be
-   * used to host a credential-harvesting copy. Absent = allowed (legacy manifests).
-   */
   proxy?: { allowed: boolean; reason?: string };
   settings: {
     badge: boolean;

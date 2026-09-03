@@ -44,11 +44,6 @@ const STEP_OPS = [
   'return',
 ] as const;
 
-/**
- * Flat step object (no discriminatedUnion). OpenAI structured outputs reject
- * nested `oneOf`, which is what z.discriminatedUnion compiles to.
- * Unused fields must be null. `toStep` in postprocess drops incomplete ops.
- */
 export const StepZ = z.object({
   op: z.enum(STEP_OPS).describe('Recipe opcode; set unused fields to null'),
   when: z.string().nullable().describe("Template path such as 'input.size'; step skipped when empty"),

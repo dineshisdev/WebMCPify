@@ -46,11 +46,6 @@ function parseJson(s: string | null | undefined, fallback: unknown): unknown {
   }
 }
 
-/**
- * Models routinely emit `{"count": {{vars.items.length}}}` — correct intent, but a
- * bare {{...}} is not valid JSON, so the whole return value used to be stringified
- * and the agent received a double-encoded blob. Quote unquoted templates, then parse.
- */
 function parseTemplatedJson(s: string | null | undefined): unknown {
   if (!s) return undefined;
   const direct = parseJson(s, undefined);
@@ -59,11 +54,6 @@ function parseTemplatedJson(s: string | null | undefined): unknown {
   return stripJsonFilter(parseJson(quoted, undefined));
 }
 
-/**
- * `{{vars.x | json}}` as a whole return value embeds a JSON *string* inside the
- * result, so the agent gets `"resources": "[{...}]"` instead of an array. Inside a
- * return object the value is already JSON, so the filter is always wrong here.
- */
 function stripJsonFilter(v: unknown): unknown {
   if (typeof v === 'string') {
     const m = /^\{\{\s*([^{}|]+?)\s*\|\s*json\s*\}\}$/.exec(v);
@@ -245,10 +235,6 @@ function mutates(steps: Step[]): boolean {
   return steps.some((st) => MUTATING_OPS.has(st.op) || (st.op === 'fetchJson' && st.method === 'POST'));
 }
 
-/**
- * Attribute selectors are stripped before the keyword test: `button[type="submit"]`
- * would otherwise match \bsubmit\b and force every ordinary search form to sensitive.
- */
 function selectorWords(css: string): string {
   return css.replace(/\[[^\]]*\]/g, ' ').replace(/[-_#.]/g, ' ');
 }
@@ -271,7 +257,6 @@ function stepsAreSensitive(steps: Step[], model: CapabilityModel | null): boolea
   return false;
 }
 
-/** Trim to the step budget while preserving the final `return` step. */
 function capRecipe(steps: Step[]): Step[] {
   if (steps.length <= LIMITS.maxSteps) return steps;
   const last = steps[steps.length - 1]!;
@@ -292,8 +277,6 @@ export function postprocessTool(g: GeneratedTool, model: CapabilityModel | null,
     warnings.push('risk raised to sensitive (commits a sensitive action)');
     risk = 'sensitive';
   }
-  // readOnlyHint tells the agent it may call the tool without asking, so a recipe
-  // that mutates anything can never stay `read`.
   if (risk === 'read' && mutates(steps)) {
     warnings.push('risk raised to reversible (recipe mutates the page)');
     risk = 'reversible';

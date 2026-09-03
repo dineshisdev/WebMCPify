@@ -107,11 +107,6 @@ export function checkOrigin(origin: string, env: Env): { ok: true; url: URL } | 
   return { ok: true, url };
 }
 
-/**
- * Why this site may not be served through the instant proxy, or null if it may.
- * Proxying re-serves an origin under our domain with its CSP/frame protections
- * stripped, so we refuse sign-in sites outright and honour an optional allowlist.
- */
 export function proxyRefusal(site: ResolvedSite, env: Env): string | null {
   if (!proxyAllowed(site.manifest)) {
     return site.manifest.proxy?.reason || 'this site is not eligible for instant proxying';

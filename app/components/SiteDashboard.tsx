@@ -25,6 +25,7 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
   const [tab, setTab] = useState<'proxy' | 'snippet'>('proxy');
 
   const [tick, setTick] = useState(0);
+  const [fails, setFails] = useState(0);
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
   useEffect(() => {
@@ -32,18 +33,35 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
     void (async () => {
       try {
         const res = await fetch(`/api/sites/${id}`, { cache: 'no-store', signal: ac.signal });
-        if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-        const next = (await res.json()) as Doc;
+        const text = await res.text();
+        let body: unknown = null;
+        try {
+          body = text ? JSON.parse(text) : null;
+        } catch {
+          body = null;
+        }
+        if (!res.ok || body === null) {
+          const detail = (body as { error?: string } | null)?.error;
+          throw new Error(detail || `${res.status}${res.statusText ? ' ' + res.statusText : ''}` || 'empty response');
+        }
         if (ac.signal.aborted) return;
-        setDoc(next);
+        setDoc(body as Doc);
         setErr(null);
+        setFails(0);
       } catch (e) {
         if (ac.signal.aborted || (e as Error).name === 'AbortError') return;
         setErr((e as Error).message);
+        setFails((f) => f + 1);
       }
     })();
     return () => ac.abort();
   }, [id, tick]);
+
+  useEffect(() => {
+    if (fails === 0 || fails > 8) return;
+    const t = setTimeout(() => setTick((n) => n + 1), Math.min(2000 * fails, 8000));
+    return () => clearTimeout(t);
+  }, [fails]);
 
   useEffect(() => {
     if (!doc || !['analyzing', 'generating', 'verifying'].includes(doc.status)) return;
@@ -51,10 +69,20 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
     return () => clearTimeout(t);
   }, [doc, refresh]);
 
-  if (err) {
+  if (err && !doc && fails > 3) {
     return (
-      <Card className="p-4 text-sm text-danger">
-        <p>Could not load this site: {err}</p>
+      <Card className="p-4 text-sm">
+        <p className="text-danger">Could not load this site: {err}</p>
+        <button
+          onClick={() => {
+            setFails(0);
+            setErr(null);
+            refresh();
+          }}
+          className="mt-3 cursor-pointer rounded-lg bg-fg px-3 py-1.5 text-xs font-semibold text-surface transition-opacity hover:opacity-90"
+        >
+          Try again
+        </button>
       </Card>
     );
   }
@@ -109,6 +137,11 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
             {busy && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
             {st.label}
           </span>
+          {err && (
+            <span className="text-[11px] text-fg-subtle" role="status">
+              reconnecting…
+            </span>
+          )}
         </div>
         <a
           href={doc.url}
@@ -257,13 +290,13 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
           <li className="flex gap-2.5">
             <Step n={1} />
             <span>
-              <strong className="font-semibold text-fg">ChatGPT desktop app</strong> — open the agent-ready URL in its built-in browser, click the site-tools arrow in the address bar, then ask: “Find black running sneakers under ₹10,000 in size 9, compare the best three and add the best one to my cart.”
+              <strong className="font-semibold text-fg">Chrome 149+</strong> — turn on <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">chrome://flags/#enable-webmcp-testing</code>, open the agent-ready URL, then DevTools → Application → WebMCP. Run <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">search_products</code> with <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">{`{ "query": "black" }`}</code>.
             </span>
           </li>
           <li className="flex gap-2.5">
             <Step n={2} />
             <span>
-              <strong className="font-semibold text-fg">Chrome 149+</strong> — enable <code className="rounded bg-surface-2 px-1 py-px font-mono text-[11px]">chrome://flags/#enable-webmcp-testing</code>, then DevTools → Application → WebMCP lists the tools and runs them.
+              <strong className="font-semibold text-fg">ChatGPT desktop</strong> — same URL in the in-app browser, site-tools arrow in the address bar. Ask: “Find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart.”
             </span>
           </li>
           <li className="flex gap-2.5">
@@ -274,7 +307,7 @@ export function SiteDashboard({ id, workerOrigin, appOrigin }: { id: string; wor
           </li>
         </ol>
         <p className="mt-3 border-t pt-3 text-xs text-fg-subtle">
-          Sensitive tools such as <code className="font-mono">place_order</code> always ask the human to confirm in an on-page dialog, on top of the agent&apos;s own confirmation.
+          Sensitive tools like <code className="font-mono">place_order</code> always ask a human to confirm on the page.
         </p>
       </Card>
 

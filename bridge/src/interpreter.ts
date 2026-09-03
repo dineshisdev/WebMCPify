@@ -117,8 +117,6 @@ class StepEnv {
 
   private navigate(target: string): Done {
     const url = this.withPrefix(target);
-    // location.assign() runs `javascript:` URLs in the page origin, and the target
-    // is template-resolved from manifest + agent input. Same-origin http(s) only.
     let resolved: URL;
     try {
       resolved = new URL(url, location.href);

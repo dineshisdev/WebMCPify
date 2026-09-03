@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 export const metadata: Metadata = {
   title: 'WebMCPify — give any website an agent interface',
   description:
-    'Paste a URL. WebMCPify discovers what the site can do, generates WebMCP tools, verifies them on the live site and gives you an agent-ready URL.',
+    'Paste a URL. Get a version of that site that agents can use — same UI, real WebMCP tools.',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           {children}
         </main>
         <footer className="mt-auto border-t py-6 text-center text-xs text-fg-subtle">
-          Make today&apos;s web callable by tomorrow&apos;s agents. · OpenAI WebMCP Challenge 2026
+          Built for the OpenAI WebMCP Challenge 2026
         </footer>
       </body>
     </html>

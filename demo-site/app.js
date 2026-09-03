@@ -506,7 +506,7 @@ function renderCheckout() {
       total,
       items: items.map((x) => ({ id: x.id, name: x.product.name, size: x.size, qty: x.qty, line: x.line })),
     };
-    try { sessionStorage.setItem('order:' + orderId, JSON.stringify(order)); } catch { /* ignore */ }
+    try { sessionStorage.setItem('order:' + orderId, JSON.stringify(order)); } catch {}
     saveCart([]);
     router.navigate('/order/' + orderId);
   });

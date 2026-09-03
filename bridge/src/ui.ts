@@ -132,9 +132,6 @@ export function mountUi(opts: {
   let busy = false;
   const memory: PlanMemory = { lastIds: [], lastQuery: '' };
 
-  // In proxy mode the page is served from our origin with the site's own frame and
-  // content-security protections stripped. Say so, permanently and unmissably, so a
-  // proxied copy can never be mistaken for the real site.
   if (opts.proxied) {
     (shadow.querySelector('.proxynote') as HTMLElement).hidden = false;
     wrap.classList.add('proxied');

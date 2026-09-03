@@ -1,42 +1,83 @@
 # WebMCPify
 
-Paste a URL → crawl the site → generate WebMCP tools → get an **agent-ready URL**. Humans keep the original UI. Agents call `document.modelContext.registerTool` tools on the same page.
+Paste a website URL. Get a version of that site that agents can actually use.
+
+The site still looks the same. Agents get real tools they can call — search, add to cart, checkout — instead of guessing which button to click.
 
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com).
 
-## Demo
+## Try this (not a random URL)
 
-**Stride Legacy Store** is a fake sneaker shop (search, filter, product, cart, checkout) with **no native WebMCP**. WebMCPify gives it eight task-level tools:
+**Agent-ready shop:** https://webmcpify-proxy.dineshisdev.workers.dev/s/demo/
+
+**Dashboard:** https://webmcpify.netlify.app/sites/demo
+
+**Original shop (no tools):** https://stride-legacy.netlify.app/
+
+That’s a fake sneaker store I made. It has no WebMCP of its own. WebMCPify adds eight tools:
 
 `search_products` · `filter_products` · `get_product` · `compare_products` · `add_to_cart` · `get_cart` · `proceed_to_checkout` · `place_order`
 
-`place_order` is **sensitive**: the bridge shows an in-page confirm before the committing click.
+`place_order` asks a human to click Confirm on the page before it submits.
 
-Open the dashboard demo page (`/sites/demo`) for the agent-ready URL and a one-line snippet.
+### Chrome 149+ (this is the reliable path)
 
-## Test instructions
+1. Turn on `chrome://flags/#enable-webmcp-testing` and relaunch.
+2. Open the agent-ready URL above.
+3. DevTools → Application → WebMCP. You should see 8 tools.
+4. Run `search_products` with `{ "query": "black" }`. The shop filters and you get JSON back.
+5. Or click the **Agent-ready** badge on the page and chat: *find black sneakers under ₹10k in size 9, compare the top 3, add the cheapest to cart*.
 
-### Chrome 149+ (guaranteed path)
+Any browser, no flag: click the badge, or in the console:
 
-1. Enable `chrome://flags/#enable-webmcp-testing` and relaunch.
-2. Open the **agent-ready URL** (`https://<worker>/s/demo/`).
-3. DevTools → **Application → WebMCP** lists the tools. Run `search_products` with `{ "query": "black" }` — the shop UI updates and the tool returns compact JSON.
-4. Optional: Chrome's *Model Context Tool Inspector* extension to chat with the page.
-5. Ask: *find black sneakers under ₹10k in size 9, compare the top 3, add the best to cart*. `place_order` must show the in-page confirm.
-
-Any browser: click the **Agent-ready** badge and run a sample. `window.__webmcpify.call('search_products', { query: 'black' })` works without the flag.
-
-### ChatGPT desktop (when site tools are enabled on the account)
-
-Open the agent-ready URL in the in-app browser. A site-tools arrow appears in the address bar. Same multi-step prompt as above.
-
-### Snippet mode (site-owner install)
-
-```html
-<script src="https://<app>/w/demo.js"></script>
+```js
+window.__webmcpify.call('search_products', { query: 'black' })
 ```
 
-Same bridge, no proxy. The page origin must match the manifest. Serve `Origin-Agent-Cluster: ?1` and `Permissions-Policy: tools=(self)` (the demo store's `netlify.toml` already does).
+### ChatGPT desktop
+
+If site tools are on for your account: open the same agent-ready URL in the in-app browser. Use the same prompt.
+
+### If you own the site
+
+```html
+<script src="https://webmcpify.netlify.app/w/demo.js"></script>
+```
+
+Same tools, no proxy. Origin has to match.
+
+## How it works
+
+1. A headless browser crawls the site (forms, buttons, lists).
+2. GPT-5.6 writes a few tools as **recipes** — “click this, fill that, return this JSON.” It does not write JavaScript that runs on the page.
+3. We run those recipes on the live site. If one fails, we try to fix it once.
+4. A small script registers them with `document.modelContext.registerTool`.
+
+Two ways to get the tools onto the page:
+
+- **Proxy URL** — a Cloudflare Worker serves the site and injects the script. No change to the original site.
+- **One script tag** — if you can edit the site.
+
+If a tool would pay, order, delete, or send something, we mark it sensitive and show a confirm dialog. Tool results are kept small (1.5 KB).
+
+## Built with
+
+| Piece | What I used it for |
+|---|---|
+| OpenAI GPT-5.6 | Generating tools (`gpt-5.6-sol`) and fixing ones that fail (`gpt-5.6-terra`) |
+| Next.js 16 on Netlify | Dashboard and API |
+| Cloudflare Workers | Proxy that injects the script |
+| Render | Playwright crawl + verify |
+| Netlify | Dashboard + the demo store (two sites, one repo) |
+| Chrome WebMCP | `document.modelContext.registerTool`, DevTools, and `use-webmcp-tool` on the dashboard |
+
+Tool names match Shopify where it made sense (`get_product`, `get_cart`, `proceed_to_checkout`), so agents that already know those still work.
+
+Thanks to [MCP-B](https://mcp-b.ai) / Alex Nahas for the earlier WebMCP work.
+
+## What doesn’t work
+
+Logins, captchas, sites that block bots, WebSockets, a lot of SPAs. Random public pages are best-effort. The sneaker demo is what you should judge.
 
 ## Local dev
 
@@ -54,52 +95,6 @@ Dashboard: http://localhost:3000 — paste `http://localhost:8080` or open `/sit
 
 Agent-ready (proxy): http://localhost:8787/s/demo/
 
-Snippet against the local store: add `<script src="http://localhost:3000/w/demo.js"></script>` to `demo-site/index.html` (set `DEMO_STORE_ORIGIN=http://localhost:8080`).
-
-## Architecture
-
-```
-Next.js 16 on Netlify (GitHub)  ──►  Analyzer on Render (GitHub)  ──►  GPT-5.6 via the OpenAI API
-  landing + dashboard                   /analyze → CapabilityModel           generate SiteManifest
-  /api/sites/*  (Upstash Redis)         /verify  → per-tool pass/fail        repair failed tools
-        │
-        ├──► Cloudflare Worker (GitHub)  /s/<siteId>/…   HTMLRewriter injects the bridge
-        └──► Snippet                     /w/<siteId>.js  same bridge on the real origin
-
-Demo store: second Netlify site from the same GitHub repo (base = demo-site/)
-```
-
-Tools are a **declarative recipe DSL** interpreted by a ~39 KB IIFE (15 KB gzipped). The LLM never writes JavaScript that runs in the page. Risk is enforced in code: pay/order/delete/send clicks become `sensitive` and get a `confirm` step.
-
-The proxy is path-based (`/s/<id>/…`) with runtime `fetch` / `history` patches. Analyzer runs against the **origin**, not the proxy.
-
-## Sponsor tech
-
-| Piece | Used for |
-|---|---|
-| OpenAI GPT-5.6 | Tool generation (`gpt-5.6-sol`) and repair (`gpt-5.6-terra`), called directly on the OpenAI API with the AI SDK (`@ai-sdk/openai`, structured outputs) |
-| Next.js 16 on Netlify | Dashboard + API, deployed from GitHub |
-| Cloudflare Workers + HTMLRewriter | Same-origin reverse proxy + bridge injection (GitHub → Workers) |
-| Render | Playwright analyzer/verifier (Docker, GitHub Blueprint) |
-| Netlify | Dashboard and the demo store (two sites, one GitHub repo) |
-| Chrome WebMCP | `document.modelContext.registerTool`, DevTools panel, `use-webmcp-tool` on the dashboard itself |
-
-Shopify-compatible names (`get_product`, `get_cart`, `proceed_to_checkout`) so agents that already know Shopify stores work unchanged.
-
-Credits: [MCP-B](https://mcp-b.ai) / Alex Nahas for the WebMCP precursor. AbortSignal lifecycle and `CallToolResult` shapes follow that lineage.
-
-## Not supported
-
-Third-party logins/sessions, bot-challenged sites, WebSockets/SSE, service workers, strict-`Origin` CORS APIs, SPA routers that hardcode `/` with no basename. Public pages, best-effort. The demo store is the reliability floor.
-
-## Security model
-
-- Recipes only. No `eval`, no generated page JS.
-- `readOnlyHint` / `untrustedContentHint` set on every tool.
-- Outputs capped at 1.5 KB.
-- Sensitive tools require an in-page human confirm (and the agent's own confirmation policy).
-- Snippet mode refuses to run if `manifest.origin !== location.origin`.
-
 ## Repo layout
 
 ```
@@ -112,7 +107,7 @@ demo-site/    Stride Legacy Store (static; second Netlify site)
 netlify.toml  Dashboard Netlify build (repo root)
 ```
 
-## Deploy (all from GitHub — no CLI required after connect)
+## Deploy (all from GitHub)
 
 Push `main`, then connect **this repo** in each dashboard:
 
@@ -132,8 +127,6 @@ Push `main`, then connect **this repo** in each dashboard:
    New → Blueprint → this repo → `render.yaml`. Set `BRIDGE_URL=https://<dashboard>/bridge.js` and `ANALYZER_TOKEN` (same as Netlify).
 
 Every push to `main` redeploys. After Devpost submit: freeze the repo.
-
-Devpost copy and the video shot list: [`SUBMISSION.md`](SUBMISSION.md).
 
 ## License
 

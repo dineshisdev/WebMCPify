@@ -16,11 +16,6 @@ function isDemoOrigin(origin: string): boolean {
   }
 }
 
-/**
- * A proxied page is same-origin with our injected script and has the origin's
- * CSP/frame protections removed, so we refuse to host anything with a sign-in
- * form. Snippet mode has no such restriction — the owner installs it themselves.
- */
 function proxyDecision(cap: CapabilityModel): { allowed: boolean; reason?: string } {
   if (cap.pages.some((p) => p.auth)) {
     return { allowed: false, reason: 'the crawl found a sign-in form on this site' };

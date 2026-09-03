@@ -5,25 +5,25 @@ import { HeroVisual } from './components/HeroVisual';
 import { Card, IconCheck, IconExternal } from './components/ui';
 
 const STEPS = [
-  { n: '1', title: 'Analyze', body: 'A headless browser crawls the site: forms, controls, repeated lists, same-origin JSON endpoints, SPA behaviour.' },
-  { n: '2', title: 'Generate', body: 'GPT-5.6 turns that capability model into a handful of task-level tools with JSON schemas, risk tiers and executable recipes — never generated JavaScript.' },
-  { n: '3', title: 'Verify', body: 'Every read tool runs against the live site in Playwright. Failures get one repair pass, then re-check. Sensitive tools are dry-run.' },
-  { n: '4', title: 'Ship', body: 'Take an agent-ready URL from the edge proxy, or paste one line into your own site. Humans keep the UI; agents get the tools.' },
+  { n: '1', title: 'Analyze', body: 'A headless browser opens the site and notes the forms, buttons, and lists.' },
+  { n: '2', title: 'Generate', body: 'GPT-5.6 writes a few tools as recipes — click this, fill that — not JavaScript that runs in the page.' },
+  { n: '3', title: 'Verify', body: 'We run those recipes on the live site. If one fails, we try to fix it once.' },
+  { n: '4', title: 'Ship', body: 'You get a URL agents can use, or one script tag if you own the site. The original UI stays.' },
 ];
 
 const STACK = [
-  ['OpenAI GPT-5.6', 'tool generation & repair (AI SDK structured outputs)'],
-  ['Next.js 16', 'dashboard, API, pipeline state machine'],
-  ['Cloudflare Workers · HTMLRewriter', 'edge proxy that injects the bridge'],
-  ['Render · Playwright', 'analyzer & live verification service'],
-  ['Netlify', 'hosts the dashboard and the demo “legacy” store'],
-  ['Chrome WebMCP · use-webmcp-tool', 'the standard, the hook, the DevTools panel'],
+  ['OpenAI GPT-5.6', 'writes the tools, and fixes ones that fail'],
+  ['Next.js 16', 'dashboard and API'],
+  ['Cloudflare Workers', 'proxy that injects the script'],
+  ['Render · Playwright', 'crawl and live checks'],
+  ['Netlify', 'dashboard + the demo store'],
+  ['Chrome WebMCP', 'document.modelContext and DevTools'],
 ];
 
 const SAFETY = [
-  'Tools are declarative recipes interpreted by a 39 KB bridge (15 KB gzipped) — the model never writes code that runs in your browser.',
-  'Code, not the model, decides risk: anything that clicks pay, order, delete or send becomes sensitive and gets an on-page confirmation.',
-  'readOnlyHint and untrustedContentHint are set on every tool, so ChatGPT and Chrome apply their own guardrails. Outputs are capped at 1.5 KB.',
+  'GPT never writes code that runs in the browser. Tools are recipes a small script follows.',
+  'If a tool would pay, order, delete, or send something, we show a confirm dialog on the page.',
+  'ChatGPT and Chrome still apply their own tool warnings. Results are kept small.',
 ];
 
 export default function Home() {
@@ -40,9 +40,9 @@ export default function Home() {
           Give any website an agent interface.
         </h1>
         <p className="max-w-2xl text-lg leading-relaxed text-fg-muted">
-          Paste a URL. WebMCPify discovers what the site can do, generates{' '}
-          <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[15px] text-fg">document.modelContext</code> tools, verifies them
-          against the live site, and hands you an agent-ready URL — without rebuilding anything.
+          Paste a URL. We look at the site, add{' '}
+          <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[15px] text-fg">document.modelContext</code> tools, check they
+          work, and give you a URL agents can use — without rebuilding the site.
         </p>
         <UrlForm />
         <p className="text-sm text-fg-subtle">
@@ -71,10 +71,9 @@ export default function Home() {
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-fg">Why this matters</h2>
           <p className="mt-2 max-w-[65ch] text-[15px] leading-relaxed text-fg-muted">
-            Shopify ships WebMCP tools on every storefront. Cloudflare can inject fixed tool packs for sites it already hosts. Everyone else — the
-            long tail of shops, booking sites, portals and internal apps — was built for people with a mouse, and nobody is going to rebuild them.
-            WebMCPify is the compatibility layer: the human keeps the real UI, the agent gets typed tools, and the site owner keeps control through
-            risk tiers and in-page confirmations.
+            Most of the web was built for people with a mouse. Shopify can add WebMCP to their own stores. Everyone else would have to rebuild.
+            That’s not going to happen. WebMCPify sits in the middle: you keep the real site, the agent gets named tools, and anything risky still
+            needs a human to confirm on the page.
           </p>
           <h3 className="mt-6 text-sm font-semibold text-fg">Safety model</h3>
           <ul className="mt-2 space-y-2">
@@ -97,7 +96,7 @@ export default function Home() {
             ))}
           </dl>
           <p className="mt-3 text-xs leading-relaxed text-fg-subtle">
-            This dashboard is itself agent-ready — open it in a WebMCP browser and ask it to make a site agent-ready.
+            This dashboard is a WebMCP page too. Open it in Chrome with the flag on and you can ask it to analyze a site.
           </p>
         </div>
       </section>

@@ -4,7 +4,6 @@ export interface Env {
   DASHBOARD_URL: string;
   DEMO_ORIGIN?: string;
   ALLOW_PRIVATE_ORIGINS?: string;
-  /** Comma-separated origins. Empty/unset = any analyzed origin is proxyable. */
   ALLOWED_ORIGINS?: string;
 }
 

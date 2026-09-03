@@ -71,7 +71,6 @@ function esc(v: string): string {
   return v.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 }
 
-/** Shown instead of the proxied page when instant proxying is not permitted. */
 function refusedPage(site: { origin: string; manifest: { siteId: string } }, reason: string, env: Env): Response {
   const dash = (env.DASHBOARD_URL || '').replace(/\/$/, '');
   const body = `<!doctype html><html lang="en"><head><meta charset="utf-8">
