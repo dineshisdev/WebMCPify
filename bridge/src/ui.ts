@@ -124,7 +124,9 @@ export function mountUi(opts: {
   const input = form.querySelector('input') as HTMLInputElement;
 
   if (opts.hidden) wrap.style.display = 'none';
-  document.documentElement.appendChild(host);
+  const attach = () => (document.documentElement || document.body)?.appendChild(host);
+  if (document.documentElement || document.body) attach();
+  else document.addEventListener('DOMContentLoaded', attach, { once: true });
 
   let tools: ToolDef[] = [];
   let busy = false;

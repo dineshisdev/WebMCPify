@@ -43,18 +43,20 @@ async function start(cfg: BridgeConfig): Promise<void> {
   }
 
   const hideUi = cfg.mode === 'verify' || manifest.settings.badge === false;
-  const ui = mountUi({
-    hidden: hideUi,
-    proxied: cfg.mode === 'proxy',
-    apiBase: cfg.apiBase,
-    onCall: (name, input) => {
-      const api = window.__webmcpify;
-      if (!api) return Promise.reject(new Error('bridge not ready'));
-      return api.call(name, input);
-    },
-  });
+  const ui = hideUi
+    ? null
+    : mountUi({
+        hidden: false,
+        proxied: cfg.mode === 'proxy',
+        apiBase: cfg.apiBase,
+        onCall: (name, input) => {
+          const api = window.__webmcpify;
+          if (!api) return Promise.reject(new Error('bridge not ready'));
+          return api.call(name, input);
+        },
+      });
 
-  const runtime = createRuntime(cfg, manifest, hideUi ? null : ui);
+  const runtime = createRuntime(cfg, manifest, ui);
   window.__webmcpify = runtime;
   hookHistory(runtime.onNav);
 

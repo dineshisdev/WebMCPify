@@ -46,6 +46,38 @@ function parseJson(s: string | null | undefined, fallback: unknown): unknown {
   }
 }
 
+/**
+ * Models routinely emit `{"count": {{vars.items.length}}}` — correct intent, but a
+ * bare {{...}} is not valid JSON, so the whole return value used to be stringified
+ * and the agent received a double-encoded blob. Quote unquoted templates, then parse.
+ */
+function parseTemplatedJson(s: string | null | undefined): unknown {
+  if (!s) return undefined;
+  const direct = parseJson(s, undefined);
+  if (direct !== undefined) return direct;
+  const quoted = s.replace(/(?<!")(\{\{[^{}]*\}\})(?!")/g, '"$1"');
+  return stripJsonFilter(parseJson(quoted, undefined));
+}
+
+/**
+ * `{{vars.x | json}}` as a whole return value embeds a JSON *string* inside the
+ * result, so the agent gets `"resources": "[{...}]"` instead of an array. Inside a
+ * return object the value is already JSON, so the filter is always wrong here.
+ */
+function stripJsonFilter(v: unknown): unknown {
+  if (typeof v === 'string') {
+    const m = /^\{\{\s*([^{}|]+?)\s*\|\s*json\s*\}\}$/.exec(v);
+    return m ? `{{${m[1]}}}` : v;
+  }
+  if (Array.isArray(v)) return v.map(stripJsonFilter);
+  if (v && typeof v === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = stripJsonFilter(val);
+    return out;
+  }
+  return v;
+}
+
 function drop(op: string, reason: string, warnings: string[]): null {
   warnings.push(`${op} dropped: ${reason}`);
   return null;
@@ -145,7 +177,7 @@ function toStep(g: GeneratedStep, warnings: string[]): Step | null {
       if (!g.title || !g.message) return drop(g.op, 'title and message required', warnings);
       return { ...base, op: 'confirm', title: g.title, message: g.message, ...(g.details ? { details: g.details } : {}) };
     case 'return': {
-      let value = parseJson(g.valueJson, undefined);
+      let value = parseTemplatedJson(g.valueJson);
       if (value === undefined) {
         warnings.push(`return.valueJson was not valid JSON; wrapped as text`);
         value = { result: g.valueJson };
