@@ -99,7 +99,7 @@ async function stepAnalyzing(doc: SiteDoc): Promise<SiteDoc> {
   doc.status = 'generating';
   const s = job.result.stats;
   pushProgress(doc, `Analyzed ${s.pagesVisited} pages · ${s.forms} forms · ${s.controls} controls · ${s.lists} lists · ${s.endpoints} endpoints`);
-  pushProgress(doc, 'Generating tools with GPT-5.6…');
+  pushProgress(doc, 'Generating tools with GPT-5.6...');
   return saveSite(doc);
 }
 

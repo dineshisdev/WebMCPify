@@ -56,7 +56,7 @@ If a tool would pay, order, delete, or send something, we mark it sensitive and 
 
 | Tech | What I used it for |
 |---|---|
-| OpenAI GPT-5.6 | Generating tools (`gpt-5.6-sol`) and fixing ones that fail (`gpt-5.6-terra`) |
+| OpenAI GPT-5.6 | Generating and repairing tools |
 | Next.js 16 on Netlify | Dashboard and API |
 | Cloudflare Workers | Proxy that injects the script |
 | Render | Playwright crawl + verify |

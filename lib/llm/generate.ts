@@ -6,8 +6,8 @@ import { finalizeTools, postprocessTool, sanitizeToolName } from './postprocess'
 import { buildOneToolPrompt, buildPlanPrompt, buildGenerationPrompt, SYSTEM_PROMPT } from './prompts';
 import { GenerationZ, OneToolZ, ToolPlanZ } from './schema';
 
-const DEFAULT_GEN_MODEL = 'gpt-5.6-sol';
-const DEFAULT_REPAIR_MODEL = 'gpt-5.6-terra';
+const DEFAULT_GEN_MODEL = 'gpt-5.6-luna';
+const DEFAULT_REPAIR_MODEL = 'gpt-5.6-luna';
 
 export const FAST_GEN = {
   openai: { reasoningEffort: 'none' as const, textVerbosity: 'low' as const, strictJsonSchema: false },
